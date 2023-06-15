@@ -9,11 +9,13 @@ const config = {
   channelSecret: ''
 };
 
+
 // 發送訊息到 '<USER_ID>' 
 const channellUserID = '';
 
 const googleAPIKey = '';
 const googleSearchEngineId = '';
+
 
 const client = new line.Client(config);
 
@@ -35,8 +37,8 @@ router.post('/webhook', line.middleware(config), async (req, res) => {
 
       if (message.startsWith('[search]')) {
         const query = message.slice(8);
-        const results = await searchGoogle(query);
-        await replyWithSearchResults(event.replyToken, results);
+        // const results = await searchGoogle(query);
+        await replyWithSearchResults(event.replyToken, query);
       } else if (message === '[info]') {
         await replyWithInfoTemplate(event.replyToken);
       } else {
@@ -49,6 +51,15 @@ router.post('/webhook', line.middleware(config), async (req, res) => {
     console.error(error);
     res.status(500).json({ success: false, error: 'Failed to process events' });
   }
+});
+
+router.get("/search", express.json(), async (req, res) => {
+  if (!req.query.key) {
+    res.send("Hello 🚀");
+  }
+  const results = await searchGoogle(req.query.key)
+  const response = await replyWithSearchResults(null, results);
+  res.json(response);
 });
 
 
@@ -111,52 +122,23 @@ async function searchGoogle(query) {
     cx: searchEngineId,
     q: query,
     auth: apiKey,
-    num: 10,
+    num: 1,
   });
 
   const results = response.data.items;
   return results;
 }
 
-async function replyWithSearchResults(replyToken, results) {
-  // const messages = results.map((result) => ({
-  //   type: 'text',
-  //   text: result.title + '\n' + result.link,
-  // }));
-  let columns = []
-  let object = {}
-  for (let i = 0; i < results.length; i++) {
-    if (i % 3 === 0) {
-      object = {
-        text: 'Search Page:' + (Math.floor(i / 3) + 1),
-        actions: []
-      }
-    }
-    object.actions.push({
-      type: 'url',
-      label: results[i].title,
-      uri: results[i].link
-    })
-    if (i % 3 === 2) {
-      columns.push(object)
-    }
-  }
-  columns = results.map((result) => ({
+
+async function replyWithSearchResults(replyToken, query) {
+  const message = {
     type: 'text',
-    text: result.title + '\n' + result.link,
-  }));
+    text: `https://www.google.com/search?q=${query}`,
+  };
 
-  const messages = {
-    type: 'template',
-    altText: 'Info',
-    template: {
-      type: 'carousel',
-      columns: columns
-    }
-  }
-
-  return client.replyMessage(replyToken, messages);
+  await client.replyMessage(replyToken, message);
 }
+
 
 async function replyWithInfoTemplate(replyToken) {
   const message = {
