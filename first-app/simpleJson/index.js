@@ -2,6 +2,8 @@ var express = require('express');
 var _ = require('lodash');
 var router = express.Router();
 
+router.use(express.json());
+
 var aiaaText = require('./aiaa_text');
 var now = Date.now();
 
