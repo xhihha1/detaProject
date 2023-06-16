@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 var express = require('express');
 const line = require('@line/bot-sdk');
 const axios = require('axios');
@@ -10,6 +12,7 @@ const config = {
 };
 
 
+
 // 發送訊息到 '<USER_ID>' 
 const channellUserID = '';
 
@@ -20,7 +23,10 @@ const googleSearchEngineId = '';
 const client = new line.Client(config);
 
 router.get("/", (req, res) => {
-  res.send("Hello from Space line Bot! 🚀");
+  const protocol = req.protocol;
+  const host = req.get('host');
+  const currentUrl = `${protocol}://${host}/page/asset/yui.png`;
+  res.send(`Hello from Space line Bot! 🚀${currentUrl} <img src="${currentUrl}">`);
 });
 
 // line bot webhook can't use express.json middleware
@@ -29,20 +35,23 @@ router.post('/webhook', line.middleware(config), async (req, res) => {
     const events = req.body.events;
 
     for (const event of events) {
-      if (event.type !== 'message' || event.message.type !== 'text') {
-        continue;
-      }
-
-      const message = event.message.text.toLowerCase();
-
-      if (message.startsWith('[search]')) {
-        const query = message.slice(8);
-        // const results = await searchGoogle(query);
-        await replyWithSearchResults(event.replyToken, query);
-      } else if (message === '[info]') {
-        await replyWithInfoTemplate(event.replyToken);
-      } else {
-        await replyWithKeywordExplanation(event.replyToken, message);
+      if (event.type === 'message') {
+        if (event.message.type === 'text') {
+          const message = event.message.text.toLowerCase();
+          if (message.startsWith('[search]')) {
+            const query = message.slice(8);
+            await replyWithSearchResults(event.replyToken, query);
+          } else if (message === '[info]') {
+            await replyWithInfoTemplate(event.replyToken);
+          } else {
+            await replyWithKeywordExplanation(event.replyToken, message);
+          }
+        } else if (event.message.type === 'location') {
+          const { title, address, latitude, longitude } = event.message;
+          await replyWithMapLink(event.replyToken, title, address, latitude, longitude);
+        } else if (['image', 'video', 'audio'].includes(event.message.type)) {
+          await replyWithMediaMessage(event.replyToken, event.message.type, event.message.id, req);
+        }
       }
     }
 
@@ -58,8 +67,7 @@ router.get("/search", express.json(), async (req, res) => {
     res.send("Hello 🚀");
   }
   const results = await searchGoogle(req.query.key)
-  const response = await replyWithSearchResults(null, results);
-  res.json(response);
+  res.json(results);
 });
 
 
@@ -180,6 +188,134 @@ async function replyWithKeywordExplanation(replyToken, keyword) {
   };
 
   await client.replyMessage(replyToken, message);
+}
+
+async function replyWithMapLink(replyToken, title, address, latitude, longitude) {
+  const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+  const message = {
+    type: 'text',
+    text: `${title}\n${address}\n\n${mapUrl}`,
+  };
+
+  await client.replyMessage(replyToken, message);
+}
+
+async function replyWithMediaMessage(replyToken, messageType, messageId) {
+  const message = {
+    type: messageType,
+    originalContentUrl: `https://api.line.me/v2/bot/message/${messageId}/content`,
+    previewImageUrl: `https://api.line.me/v2/bot/message/${messageId}/content`,
+  };
+
+  await client.replyMessage(replyToken, message);
+}
+
+async function getMsgContent(messageId) {
+  const response = await axios({
+    method: 'GET',
+    url: "https://api.line.me/v2/bot/message/" + messageId + "/content",
+    responseType: 'stream',
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": `Bearer ${config.channelAccessToken}`
+		}
+  })
+
+  request({
+		url: "https://api.line.me/v2/bot/message/" + messageId + "/content",
+		method: "GET",
+		json: true,
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": `Bearer ${config.channelAccessToken}`
+		}
+	}, function(error, response, body) {
+		if (!error && response.statusCode === 200) {
+			console.log('getMsgContent--------------------');
+			//console.log(body);
+			if (callbackObj) {
+				callbackObj['params'].push(body);
+				callbackObj['func'].apply(null, callbackObj['params']);
+			}
+		} else {
+			console.log("error: " + error)
+			console.log("response.statusCode: " + response.statusCode)
+			console.log("response.statusText: " + response.statusText)
+		}
+	});
+}
+
+async function downloadMedia (mediaId) {
+  try {
+    const response = await axios.get(`https://api.line.me/v2/bot/message/${mediaId}/content`, {
+      headers: {
+        Authorization: `Bearer ${config.channelAccessToken}`,
+      },
+      responseType: 'stream',
+    });
+
+    const writer = fs.createWriteStream('downloaded_media.jpg'); // 指定要保存的文件名
+
+    response.data.pipe(writer);
+
+    return new Promise((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
+  } catch (error) {
+    throw new Error(`下载媒体文件失败: ${error.message}`);
+  }
+};
+
+// lineApiUtil.saveMsgImage = function(binaryData) {
+// 	var dateStr = new Date().getTime();
+// 	var filename = dateStr + '.JPEG';
+// 	var file = path.join(__dirname, '../public/', filename);
+// 	fs.writeFile(file, binaryData, 'binary', function(err) {
+// 		if (err)
+// 			console.log(err);
+// 		else
+// 			console.log("The file was saved!");
+// 	});
+// }
+
+async function replyWithMediaMessage_backup(replyToken, messageType, messageId, req) {
+  const protocol = req.protocol;
+  const host = req.get('host');
+  const currentUrl = `${protocol}://${host}`;
+  const response = await client.getMessageContent(messageId);
+
+  if (response.headers['content-type'].startsWith('image/') ||
+      response.headers['content-type'].startsWith('video/') ||
+      response.headers['content-type'].startsWith('audio/')) {
+    const ext = response.headers['content-type'].split('/')[1];
+    const filename = `${messageId}.${ext}`;
+    const filePath = path.join(__dirname, '../page/tempMedia', filename);
+
+    const writeStream = fs.createWriteStream(filePath);
+    // response.data.pipe(writeStream);
+    response.pipe(writeStream);
+
+    // // `https://api.line.me/v2/bot/message/${messageId}/content`
+    writeStream.on('finish', () => {
+      const message = {
+        type: messageType,
+        originalContentUrl: `${currentUrl}/page/tempMedia/${filename}`,
+        previewImageUrl: `${currentUrl}/page/tempMedia/${filename}`,
+      };
+
+      client.replyMessage(replyToken, message);
+    });
+
+    writeStream.on('error', (error) => {
+      console.error(error);
+      client.replyMessage(replyToken, { type: 'text', text: 'Failed to save media file' });
+    });
+    client.replyMessage(replyToken, { type: 'text', text: `_A_:${filename},_B_:${filePath},_C_:${currentUrl}/page/tempMedia/${filename}` });
+  } else {
+    client.replyMessage(replyToken, { type: 'text', text: 'Unsupported media type' });
+  }
 }
 
 module.exports = router;

@@ -10,6 +10,9 @@ const linebot = require('./linebot/index');
 app.use(cors())
 app.use('/lineBot', linebot); // line bot webhook can't use express.json
 
+// 将指定的目录设置为静态目录
+app.use('/page', express.static('page'));
+
 // app.use(express.json());
 app.use('/simpleJson', routes);
 
@@ -22,6 +25,7 @@ const config = {
   channelAccessToken: '',
   channelSecret: ''
 };
+
 app.post('/webhook', line.middleware(config), (req, res) => {
   console.log('--- In webhook ---')
   Promise
