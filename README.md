@@ -23,3 +23,5 @@ api service 的 api要能正常呼叫不出現 302 跳轉要在 Spacefile 中設
 https://cse.google.com/cse/all
 
 https://console.cloud.google.com/welcome?project=firstproj-3758b
+
+https://github.com/line/line-bot-sdk-nodejs/blob/next/examples/kitchensink/index.js#L392

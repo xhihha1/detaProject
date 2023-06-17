@@ -12,6 +12,7 @@ app.use('/lineBot', linebot); // line bot webhook can't use express.json
 
 // 将指定的目录设置为静态目录
 app.use('/page', express.static('page'));
+app.use('/line', express.static('linebot'));
 
 // app.use(express.json());
 app.use('/simpleJson', routes);

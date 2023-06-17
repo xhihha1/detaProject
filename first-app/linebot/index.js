@@ -13,6 +13,7 @@ const config = {
 
 
 
+
 // 發送訊息到 '<USER_ID>' 
 const channellUserID = '';
 
@@ -201,121 +202,87 @@ async function replyWithMapLink(replyToken, title, address, latitude, longitude)
   await client.replyMessage(replyToken, message);
 }
 
-async function replyWithMediaMessage(replyToken, messageType, messageId) {
+async function replyWithMediaMessage(replyToken, messageType, messageId, req) {
   const message = {
     type: messageType,
     originalContentUrl: `https://api.line.me/v2/bot/message/${messageId}/content`,
     previewImageUrl: `https://api.line.me/v2/bot/message/${messageId}/content`,
   };
-
+  // const directoryPath = path.join(__dirname, '../page/tempMedia'); 
+  // const downloadPath = path.join(__dirname, '../page/tempMedia',`${messageId}.jpg`);
+  const directoryPath = path.join(__dirname); 
+  const downloadPath = path.join(__dirname,`${messageId}.jpg`);
+  await createDirectoryIfNotExists(directoryPath)
+  await changeDirectoryPermissions(directoryPath)
+  const save = await downloadMedia(messageId, downloadPath)
+  if (save) {
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const currentUrl = `${protocol}://${host}`;
+    // message.originalContentUrl = `${currentUrl}/page/tempMedia/${messageId}.jpg`;
+    // message.previewImageUrl = `${currentUrl}/page/tempMedia/${messageId}.jpg`;
+    message.originalContentUrl = `${currentUrl}/line/${messageId}.jpg`;
+    message.previewImageUrl = `${currentUrl}/line/${messageId}.jpg`;
+  } else {
+    message.type = 'text';
+    message.text = `fail download ${messageId}`
+  }
+  // const filePath = path.join(__dirname, '../page/tempMedia')
+  // const fileList = await readDirectory(filePath)
   await client.replyMessage(replyToken, message);
+  // await client.replyMessage(replyToken, lineMessage);
 }
 
-async function getMsgContent(messageId) {
-  const response = await axios({
-    method: 'GET',
-    url: "https://api.line.me/v2/bot/message/" + messageId + "/content",
-    responseType: 'stream',
-		headers: {
-			"Content-Type": "application/json",
-			"Authorization": `Bearer ${config.channelAccessToken}`
-		}
-  })
-
-  request({
-		url: "https://api.line.me/v2/bot/message/" + messageId + "/content",
-		method: "GET",
-		json: true,
-		headers: {
-			"Content-Type": "application/json",
-			"Authorization": `Bearer ${config.channelAccessToken}`
-		}
-	}, function(error, response, body) {
-		if (!error && response.statusCode === 200) {
-			console.log('getMsgContent--------------------');
-			//console.log(body);
-			if (callbackObj) {
-				callbackObj['params'].push(body);
-				callbackObj['func'].apply(null, callbackObj['params']);
-			}
-		} else {
-			console.log("error: " + error)
-			console.log("response.statusCode: " + response.statusCode)
-			console.log("response.statusText: " + response.statusText)
-		}
-	});
-}
-
-async function downloadMedia (mediaId) {
+async function downloadMedia (mediaId, downloadPath) {
   try {
-    const response = await axios.get(`https://api.line.me/v2/bot/message/${mediaId}/content`, {
-      headers: {
-        Authorization: `Bearer ${config.channelAccessToken}`,
-      },
-      responseType: 'stream',
-    });
-
-    const writer = fs.createWriteStream('downloaded_media.jpg'); // 指定要保存的文件名
-
-    response.data.pipe(writer);
-
     return new Promise((resolve, reject) => {
-      writer.on('finish', resolve);
-      writer.on('error', reject);
-    });
+      // const downloadPath = path.join(__dirname, '../page/tempMedia',`${mediaId}.jpg`);
+        client.getMessageContent(mediaId)
+          .then((stream) => {
+              const writable = fs.createWriteStream(downloadPath);
+              stream.pipe(writable);
+              stream.on('end', () => {resolve(true)});
+              stream.on('error', () => {reject(false)});
+          })
+    })
   } catch (error) {
-    throw new Error(`下载媒体文件失败: ${error.message}`);
+    console.log(`下载媒体文件失败: ${error.message}`);
+    return false;
   }
 };
 
-// lineApiUtil.saveMsgImage = function(binaryData) {
-// 	var dateStr = new Date().getTime();
-// 	var filename = dateStr + '.JPEG';
-// 	var file = path.join(__dirname, '../public/', filename);
-// 	fs.writeFile(file, binaryData, 'binary', function(err) {
-// 		if (err)
-// 			console.log(err);
-// 		else
-// 			console.log("The file was saved!");
-// 	});
-// }
-
-async function replyWithMediaMessage_backup(replyToken, messageType, messageId, req) {
-  const protocol = req.protocol;
-  const host = req.get('host');
-  const currentUrl = `${protocol}://${host}`;
-  const response = await client.getMessageContent(messageId);
-
-  if (response.headers['content-type'].startsWith('image/') ||
-      response.headers['content-type'].startsWith('video/') ||
-      response.headers['content-type'].startsWith('audio/')) {
-    const ext = response.headers['content-type'].split('/')[1];
-    const filename = `${messageId}.${ext}`;
-    const filePath = path.join(__dirname, '../page/tempMedia', filename);
-
-    const writeStream = fs.createWriteStream(filePath);
-    // response.data.pipe(writeStream);
-    response.pipe(writeStream);
-
-    // // `https://api.line.me/v2/bot/message/${messageId}/content`
-    writeStream.on('finish', () => {
-      const message = {
-        type: messageType,
-        originalContentUrl: `${currentUrl}/page/tempMedia/${filename}`,
-        previewImageUrl: `${currentUrl}/page/tempMedia/${filename}`,
-      };
-
-      client.replyMessage(replyToken, message);
-    });
-
-    writeStream.on('error', (error) => {
-      console.error(error);
-      client.replyMessage(replyToken, { type: 'text', text: 'Failed to save media file' });
-    });
-    client.replyMessage(replyToken, { type: 'text', text: `_A_:${filename},_B_:${filePath},_C_:${currentUrl}/page/tempMedia/${filename}` });
-  } else {
-    client.replyMessage(replyToken, { type: 'text', text: 'Unsupported media type' });
+async function createDirectoryIfNotExists (directoryPath) {
+  try {
+    await fs.promises.access(directoryPath, fs.constants.R_OK | fs.constants.W_OK);
+    console.log('目录已存在');
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      try {
+        await fs.promises.mkdir(directoryPath, { recursive: true });
+        console.log('目录已创建');
+        return true;
+      } catch (error) {
+        console.error('创建目录时发生错误:', error);
+        return false;
+      }
+    } else {
+      console.error('访问目录时发生错误:', error);
+      return false;
+    }
   }
-}
+};
+
+async function changeDirectoryPermissions (directoryPath) {
+  const permissions = 0o777;
+  try {
+    await fs.promises.chmod(directoryPath, permissions);
+    console.log('目录权限已成功更改');
+    return true;
+  } catch (error) {
+    console.error('更改目录权限时发生错误:', error);
+    return false;
+  }
+};
 
 module.exports = router;
