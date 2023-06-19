@@ -5,6 +5,7 @@ const line = require('@line/bot-sdk');
 const axios = require('axios');
 var router = express.Router();
 const { google } = require('googleapis');
+const deta = require('deta');
 
 const config = {
   channelAccessToken: '',
@@ -14,11 +15,13 @@ const config = {
 
 
 
+
 // 發送訊息到 '<USER_ID>' 
 const channellUserID = '';
 
 const googleAPIKey = '';
 const googleSearchEngineId = '';
+
 
 
 const client = new line.Client(config);
@@ -284,5 +287,37 @@ async function changeDirectoryPermissions (directoryPath) {
     return false;
   }
 };
+
+
+// 获取Line媒体ID的API端点
+router.get('/media/:mediaId', async (req, res) => {
+  try {
+    const mediaId = req.params.mediaId;
+
+    // 获取媒体文件的URL
+    const response = await client.getMessageContent(mediaId);
+    const contentType = response.headers['content-type'];
+    const fileExtension = contentType.split('/')[1];
+    const fileUrl = `https://api.line.me/v2/bot/message/${mediaId}/content`;
+
+    // 使用Axios下载媒体文件
+    const downloadResponse = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+    const imageData = Buffer.from(downloadResponse.data, 'binary');
+
+    // 在Deta Space中存储图像文件
+    const driveResponse = await detaSpace.put(fileExtension, imageData);
+
+    // 构建图像文件的公共URL
+    const fileKey = driveResponse.key;
+    const filePublicUrl = `https://FirstDeta.deta.dev/drive/${fileKey}`;
+
+    // 返回图像文件的公共URL
+    res.json({ success: true, url: filePublicUrl });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: 'Failed to process media' });
+  }
+});
+
 
 module.exports = router;

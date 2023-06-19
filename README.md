@@ -25,3 +25,7 @@ https://cse.google.com/cse/all
 https://console.cloud.google.com/welcome?project=firstproj-3758b
 
 https://github.com/line/line-bot-sdk-nodejs/blob/next/examples/kitchensink/index.js#L392
+
+https://github.com/mikhailsdv/deta-black-hole/blob/main/backend/src/index.js#L61
+
+https://github.com/mikhailsdv/deta-black-hole/blob/main/backend/src/db.js#L115
