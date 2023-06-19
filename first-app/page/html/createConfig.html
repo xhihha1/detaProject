@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* 風格樣式 */
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .form-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .form-field {
+      margin-bottom: 10px;
+    }
+    .form-field label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-field input {
+      width: 100%;
+      padding: 5px;
+      font-size: 14px;
+    }
+    .form-submit {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>輸入表單</h2>
+    <form action="/formConfig/submitConfig" method="POST">
+      <div class="form-field">
+        <label for="channelAccessToken">Channel Access Token</label>
+        <input type="text" id="channelAccessToken" name="channelAccessToken" required>
+      </div>
+      <div class="form-field">
+        <label for="channelSecret">Channel Secret</label>
+        <input type="text" id="channelSecret" name="channelSecret" required>
+      </div>
+      <div class="form-field">
+        <label for="googleAPIKey">Google API Key</label>
+        <input type="text" id="googleAPIKey" name="googleAPIKey" required>
+      </div>
+      <div class="form-field">
+        <label for="googleSearchEngineId">Google Search Engine ID</label>
+        <input type="text" id="googleSearchEngineId" name="googleSearchEngineId" required>
+      </div>
+      <div class="form-submit">
+        <button type="submit">提交</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

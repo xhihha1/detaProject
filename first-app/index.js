@@ -5,12 +5,15 @@ const cors = require('cors')
 const line = require('@line/bot-sdk');
 
 const routes = require('./simpleJson/index');
+const formConfig = require('./simpleJson/formConfig');
 const linebot = require('./linebot/index');
 const testbot = require('./linebot/testapi');
 
 app.use(cors())
 app.use('/lineBot', linebot); // line bot webhook can't use express.json
 app.use('/testBot', testbot);
+app.use('/formConfig', formConfig);
+
 
 // 将指定的目录设置为静态目录
 app.use('/page', express.static('page'));
