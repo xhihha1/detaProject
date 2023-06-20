@@ -6,14 +6,15 @@ const axios = require('axios');
 var router = express.Router();
 const { google } = require('googleapis');
 const { Blob } = require('buffer');
+const setting = require('./setting');
 const {
   Deta
 } = require('deta');
 
-const config = {
-  channelAccessToken: '',
-  channelSecret: ''
-};
+// const config = {
+//   channelAccessToken: '',
+//   channelSecret: ''
+// };
 
 
 // 發送訊息到 '<USER_ID>' 
@@ -24,7 +25,8 @@ const googleSearchEngineId = '';
 
 
 
-const client = new line.Client(config);
+// const client = new line.Client(config);
+
 
 router.get("/", (req, res) => {
   const protocol = req.protocol;
@@ -33,8 +35,18 @@ router.get("/", (req, res) => {
   res.send(`Hello from Space line Bot! 🚀${currentUrl} <img src="${currentUrl}">`);
 });
 
+function lineBotMiddleware(req, res, next) {
+  const config = setting.getLineConfig()
+  if (!config) {
+    res.status(403).send('Access line config denied');
+  }
+  // 使用 line.middleware 驗證 LINE Bot 請求
+  line.middleware(config)(req, res, next);
+}
+
 // line bot webhook can't use express.json middleware
-router.post('/webhook', line.middleware(config), async (req, res) => {
+// router.post('/webhook', line.middleware(config), async (req, res) => {
+router.post('/webhook', lineBotMiddleware, async (req, res) => {
   try {
     const events = req.body.events;
 
@@ -76,8 +88,8 @@ router.get("/search", express.json(), async (req, res) => {
 });
 
 
-
 router.post('/send-line-bot-message', express.json(), (req, res) => {
+  const client = setting.getLineClient()
   const { message } = req.body;
   
   // 发送文字消息到Line Bot
@@ -99,6 +111,7 @@ router.post('/send-line-bot-message', express.json(), (req, res) => {
 
 router.get('/send-line-broadcast-message/:msg', express.json(), (req, res) => {
   const msg = req.params.msg;
+  const client = setting.getLineClient()
 
   // 创建广播消息对象
   const broadcastMessage = {
@@ -144,6 +157,7 @@ async function searchGoogle(query) {
 
 
 async function replyWithSearchResults(replyToken, query) {
+  const client = setting.getLineClient()
   const message = {
     type: 'text',
     text: `https://www.google.com/search?q=${query}`,
@@ -154,6 +168,7 @@ async function replyWithSearchResults(replyToken, query) {
 
 
 async function replyWithInfoTemplate(replyToken) {
+  const client = setting.getLineClient()
   const message = {
     type: 'template',
     altText: 'Info',
@@ -187,6 +202,7 @@ async function replyWithInfoTemplate(replyToken) {
 }
 
 async function replyWithKeywordExplanation(replyToken, keyword, event) {
+  const client = setting.getLineClient()
   const userId = event && event.source && event.source.userId || 'None';
   const message = {
     type: 'text',
@@ -197,6 +213,7 @@ async function replyWithKeywordExplanation(replyToken, keyword, event) {
 }
 
 async function replyWithMapLink(replyToken, title, address, latitude, longitude) {
+  const client = setting.getLineClient()
   const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
 
   const message = {
@@ -208,6 +225,7 @@ async function replyWithMapLink(replyToken, title, address, latitude, longitude)
 }
 
 async function replyWithMediaMessage(replyToken, message, messageType, messageId, req) {
+  const client = setting.getLineClient()
   const protocol = req.protocol;
   const host = req.get('host');
   const currentUrl = `https://${host}`;
@@ -326,6 +344,7 @@ router.get('/media/load/:mediaId', async (req, res) => {
 })
 
 async function blobMedia (mediaId) {
+  const client = setting.getLineClient()
   console.log('--- blobMedia --- ')
   try {
     return new Promise((resolve, reject) => {

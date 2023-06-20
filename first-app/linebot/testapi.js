@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const line = require('@line/bot-sdk');
+const setting = require('./setting');
 const {
   Blob
 } = require('buffer');
@@ -12,11 +13,12 @@ const {
   Deta
 } = require('deta');
 
-const config = {
-  channelAccessToken: '',
-  channelSecret: ''
-};
-const client = new line.Client(config);
+// const config = {
+//   channelAccessToken: '',
+//   channelSecret: ''
+// };
+
+// const client = new line.Client(config);
 
 // 获取Line媒体ID的API端点
 router.get('/media/:mediaId', async (req, res) => {
@@ -63,16 +65,6 @@ router.get('/media/save/:mediaId', async (req, res) => {
 })
 
 router.get('/media/load/:mediaId', async (req, res) => {
-  // const mediaId = req.params.mediaId;
-  // const deta = Deta(process.env.DETA_DATA_KEY);
-  // const drive = deta.Drive("simple_drive");
-  // const key = mediaId;
-  // const extension = 'jpg';
-  // const item = await drive.get(`${key}.${extension}`);
-  // const buffer = await item.arrayBuffer();
-  // const responseItem = Buffer.from(buffer);
-  // res.setHeader('Content-Type', 'image/jpeg');
-  // res.send(responseItem);
   const mediaId = req.params.mediaId;
   const deta = Deta(process.env.DETA_DATA_KEY);
   const drive = deta.Drive("simple_drive");
@@ -105,6 +97,7 @@ router.get('/media/load/:mediaId', async (req, res) => {
 })
 
 async function blobMedia(mediaId) {
+  const client = setting.getLineClient()
   try {
     return new Promise((resolve, reject) => {
       client.getMessageContent(mediaId)
@@ -141,6 +134,7 @@ async function blobMedia(mediaId) {
 };
 
 router.get('/broadcast/:mediaId', async (req, res) => {
+  const client = setting.getLineClient()
   const mediaId = req.params.mediaId;
   let result = false;
   const protocol = req.protocol;

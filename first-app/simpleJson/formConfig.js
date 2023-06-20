@@ -1,23 +1,62 @@
 var express = require('express');
 var router = express.Router();
-
+const axios = require('axios');
+const {
+  Deta
+} = require('deta');
 // router.use(express.json());
+var keyString = require('./keyString');
 
-router.post('/submitConfig',express.json(), (req, res) => {
+
+router.post('/submitConfig', express.json(), async (req, res) => {
   const {
     channelAccessToken,
     channelSecret,
+    channelUserID,
     googleAPIKey,
     googleSearchEngineId
   } = req.body;
-
-  console.log('Channel Access Token:', channelAccessToken);
-  console.log('Channel Secret:', channelSecret);
-  console.log('Google API Key:', googleAPIKey);
-  console.log('Google Search Engine ID:', googleSearchEngineId);
-
-  res.send('表單提交成功！');
+  const deta = Deta(process.env.DETA_DATA_KEY);
+  const db = deta.Base("env_setting");
+  try {
+    await dbPut(db, keyString.line.Channel_Access_Token, {
+      value: channelAccessToken
+    })
+    await dbPut(db, keyString.line.Channel_Secret, {
+      value: channelSecret
+    })
+    await dbPut(db, keyString.line.Channel_User_Id, {
+      value: channelUserID
+    })
+    await dbPut(db, keyString.google.googleAPIKey, {
+      value: googleAPIKey
+    })
+    await dbPut(db, keyString.google.googleSearchEngineId, {
+      value: googleSearchEngineId
+    })
+    // res.send('表單提交成功！');
+    // 使用 axios 發送 GET 請求
+    // const protocol = req.protocol;
+    // const host = req.get('host');
+    // const currentUrl = `${protocol}://${host}/lineBot/setting`;
+    // const response = await axios.get('/');
+    res.json(req.body);
+  } catch (error) {
+    res.json({ success: false, error: error });
+  }
+  res.end();
 });
+
+async function dbPut(db, key, value) {
+  try {
+    if (typeof value.value !== 'undefined') {
+      await db.put(value, key)
+    }
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 
 
 module.exports = router;

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,32 +10,38 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
+
     .form-container {
       max-width: 500px;
       margin: 0 auto;
     }
+
     .form-field {
       margin-bottom: 10px;
     }
+
     .form-field label {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
     }
+
     .form-field input {
       width: 100%;
       padding: 5px;
       font-size: 14px;
     }
+
     .form-submit {
       margin-top: 20px;
     }
   </style>
 </head>
+
 <body>
   <div class="form-container">
     <h2>輸入表單</h2>
-    <form action="/formConfig/submitConfig" method="POST">
+    <form id="myForm">
       <div class="form-field">
         <label for="channelAccessToken">Channel Access Token</label>
         <input type="text" id="channelAccessToken" name="channelAccessToken" required>
@@ -56,5 +63,42 @@
       </div>
     </form>
   </div>
+  <script>
+    // 監聽表單提交事件
+    const form = document.getElementById('myForm');
+    form.addEventListener('submit', handleSubmit);
+
+    // 表單提交處理函式
+    function handleSubmit(event) {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+      const requestBody = {};
+
+      // 將表單資訊轉換為 JSON 物件
+      for (const [key, value] of formData.entries()) {
+        requestBody[key] = value;
+      }
+
+      // 使用 Fetch API 傳送 POST 請求
+      fetch('/formConfig/submitConfig', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('回應資料:', data);
+          // 在此處處理回應資料
+        })
+        .catch(error => {
+          console.error('發生錯誤:', error);
+          // 在此處處理錯誤
+        });
+    }
+  </script>
 </body>
+
 </html>
