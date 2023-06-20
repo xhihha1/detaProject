@@ -5,15 +5,15 @@ const line = require('@line/bot-sdk');
 const axios = require('axios');
 var router = express.Router();
 const { google } = require('googleapis');
-const deta = require('deta');
+const { Blob } = require('buffer');
+const {
+  Deta
+} = require('deta');
 
 const config = {
   channelAccessToken: '',
   channelSecret: ''
 };
-
-
-
 
 
 // 發送訊息到 '<USER_ID>' 
@@ -48,13 +48,14 @@ router.post('/webhook', line.middleware(config), async (req, res) => {
           } else if (message === '[info]') {
             await replyWithInfoTemplate(event.replyToken);
           } else {
-            await replyWithKeywordExplanation(event.replyToken, message);
+            await replyWithKeywordExplanation(event.replyToken, message, event);
           }
         } else if (event.message.type === 'location') {
           const { title, address, latitude, longitude } = event.message;
           await replyWithMapLink(event.replyToken, title, address, latitude, longitude);
         } else if (['image', 'video', 'audio'].includes(event.message.type)) {
-          await replyWithMediaMessage(event.replyToken, event.message.type, event.message.id, req);
+          console.log(`reply: ${event.message.type}`)
+          await replyWithMediaMessage(event.replyToken, event.message, event.message.type, event.message.id, req);
         }
       }
     }
@@ -96,17 +97,17 @@ router.post('/send-line-bot-message', express.json(), (req, res) => {
     });
 });
 
-router.post('/send-line-broadcast-message', express.json(), (req, res) => {
-  const { message } = req.body;
+router.get('/send-line-broadcast-message/:msg', express.json(), (req, res) => {
+  const msg = req.params.msg;
 
   // 创建广播消息对象
   const broadcastMessage = {
     messages: [
       {
         type: 'text',
-        text: message,
-      },
-    ],
+        text: msg,
+      }
+    ]
   };
 
   // 使用您的Line Bot的 Channel Access Token 发送广播消息
@@ -116,7 +117,7 @@ router.post('/send-line-broadcast-message', express.json(), (req, res) => {
     })
     .catch((error) => {
       console.error(error);
-      res.status(500).json({ success: false, error: 'Failed to send message' });
+      res.status(500).json({ success: false, error: 'Failed to send message', msg: error });
     });
 });
 
@@ -185,10 +186,11 @@ async function replyWithInfoTemplate(replyToken) {
   return client.replyMessage(replyToken, message);
 }
 
-async function replyWithKeywordExplanation(replyToken, keyword) {
+async function replyWithKeywordExplanation(replyToken, keyword, event) {
+  const userId = event && event.source && event.source.userId || 'None';
   const message = {
     type: 'text',
-    text: `Explanation for keyword "${keyword}" goes here`,
+    text: `Explanation for keyword "${keyword}" goes here. User: ${userId}`,
   };
 
   await client.replyMessage(replyToken, message);
@@ -205,46 +207,145 @@ async function replyWithMapLink(replyToken, title, address, latitude, longitude)
   await client.replyMessage(replyToken, message);
 }
 
-async function replyWithMediaMessage(replyToken, messageType, messageId, req) {
-  const message = {
-    type: messageType,
-    originalContentUrl: `https://api.line.me/v2/bot/message/${messageId}/content`,
-    previewImageUrl: `https://api.line.me/v2/bot/message/${messageId}/content`,
-  };
-  // const directoryPath = path.join(__dirname, '../page/tempMedia'); 
-  // const downloadPath = path.join(__dirname, '../page/tempMedia',`${messageId}.jpg`);
-  const directoryPath = path.join(__dirname); 
-  const downloadPath = path.join(__dirname,`${messageId}.jpg`);
-  await createDirectoryIfNotExists(directoryPath)
-  await changeDirectoryPermissions(directoryPath)
-  const save = await downloadMedia(messageId, downloadPath)
-  if (save) {
-    const protocol = req.protocol;
-    const host = req.get('host');
-    const currentUrl = `${protocol}://${host}`;
-    // message.originalContentUrl = `${currentUrl}/page/tempMedia/${messageId}.jpg`;
-    // message.previewImageUrl = `${currentUrl}/page/tempMedia/${messageId}.jpg`;
-    message.originalContentUrl = `${currentUrl}/line/${messageId}.jpg`;
-    message.previewImageUrl = `${currentUrl}/line/${messageId}.jpg`;
-  } else {
-    message.type = 'text';
-    message.text = `fail download ${messageId}`
+async function replyWithMediaMessage(replyToken, message, messageType, messageId, req) {
+  const protocol = req.protocol;
+  const host = req.get('host');
+  const currentUrl = `https://${host}`;
+  const deta = Deta(process.env.DETA_DATA_KEY);
+  // const db = deta.Base(process.env.BASE_NAME || 'simple_db');
+  const drive = deta.Drive("simple_drive");
+  const db = deta.Base("simple_db");
+
+  const responseData = await blobMedia(messageId)
+  let key = messageId;
+  let extension = '';
+  let messageResponse = {};
+  if (messageType === 'image') {
+    extension = 'jpg';
+    messageResponse = [{
+      type: 'image',
+      originalContentUrl: `${currentUrl}/lineBot/media/load/${messageId}`,
+      previewImageUrl: `${currentUrl}/lineBot/media/load/${messageId}`
+    }];
   }
-  // const filePath = path.join(__dirname, '../page/tempMedia')
-  // const fileList = await readDirectory(filePath)
-  await client.replyMessage(replyToken, message);
-  // await client.replyMessage(replyToken, lineMessage);
+  if (messageType === 'video') {
+    extension = 'mp4';
+    messageResponse = [{
+      type: 'video',
+      originalContentUrl: `${currentUrl}/lineBot/media/load/${messageId}`,
+      previewImageUrl: `${currentUrl}/page/asset/yui.png`
+    }];
+  }
+  if (messageType === 'audio') {
+    extension = 'm4a';
+    messageResponse = [{
+      type: 'audio',
+      originalContentUrl: `${currentUrl}/lineBot/media/load/${messageId}`,
+      duration: message.duration
+    }];
+  }
+  if (responseData) {
+    const driveItem = await drive.put(`${key}.${extension}`, {
+      data: responseData.buffer,
+    });
+    const mediaObj = {
+      ext: extension,
+      duration: message.duration
+    }
+    await db.put(mediaObj, messageId)
+  } else {
+    messageResponse = [{
+      type: 'text',
+      text: `fail download ${messageId}`
+    }];
+  }
+  // const response = await client.broadcast(messageResponse);
+  await client.replyMessage(replyToken, messageResponse);
 }
 
-async function downloadMedia (mediaId, downloadPath) {
+
+// 获取Line媒体ID的並儲存
+router.get('/media/save/:mediaId', async (req, res) => {
+  const mediaId = req.params.mediaId;
+  const deta = Deta(process.env.DETA_DATA_KEY);
+  // const db = deta.Base(process.env.BASE_NAME || 'simple_db');
+  const drive = deta.Drive("simple_drive");
+
+  const responseData = await blobMedia(mediaId)
+  let key = '';
+  let extension = '';
+  if (responseData) {
+    key = mediaId;
+    extension = 'jpg';
+    const driveItem = await drive.put(`${key}.${extension}`, {
+      data: responseData.buffer,
+    });
+  } else {
+
+  }
+
+  const item = await drive.get(`${key}.${extension}`);
+  const buffer = await item.arrayBuffer();
+  const responseItem = Buffer.from(buffer);
+  res.setHeader('Content-Type', 'image/jpeg');
+  res.send(responseItem);
+
+})
+
+// 讀取已存的媒體
+router.get('/media/load/:mediaId', async (req, res) => {
+  const mediaId = req.params.mediaId;
+  const deta = Deta(process.env.DETA_DATA_KEY);
+  const drive = deta.Drive("simple_drive");
+  const db = deta.Base("simple_db");
+  let extension = 'jpg';
+  let contentType = 'image/jpeg';
+  const mediaExtItem = await db.get(mediaId); 
+  if (mediaExtItem && mediaExtItem.ext) {
+    extension = mediaExtItem.ext;
+  }
+  if (extension === 'mp4') {
+    contentType = 'video/mp4';
+  }
+  if (extension === 'm4a') {
+    contentType = 'audio/m4a';
+  }
+  const item = await drive.get(`${mediaId}.${extension}`);
+  const buffer = await item.arrayBuffer();
+  const responseItem = Buffer.from(buffer);
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('content-type', contentType);
+  res.set('content-type', contentType);
+  if (extension !== 'jpg') {
+    // 設置檔案名稱和附檔名
+    const contentDisposition = `attachment; filename=${mediaId}.${extension}`;
+    res.setHeader('Content-Disposition', contentDisposition);
+  }
+  res.status(200).send(responseItem);
+})
+
+async function blobMedia (mediaId) {
+  console.log('--- blobMedia --- ')
   try {
     return new Promise((resolve, reject) => {
-      // const downloadPath = path.join(__dirname, '../page/tempMedia',`${mediaId}.jpg`);
+      console.log('--- blobMedia --- in')
         client.getMessageContent(mediaId)
           .then((stream) => {
-              const writable = fs.createWriteStream(downloadPath);
-              stream.pipe(writable);
-              stream.on('end', () => {resolve(true)});
+            const buffers = [];
+              stream.on('data', (chunk) => {buffers.push(chunk);});
+              stream.on('end', () => {
+                // 合并所有Buffer为一个Buffer
+                const buffer = Buffer.concat(buffers);
+                // 将Buffer转换为Blob
+                const blob = new Blob([buffer], {
+                    type: 'application/octet-stream'
+                });
+                // 将Buffer转换为ArrayBuffer
+                const arrayBuffer = buffer.buffer;
+                // 在这里可以对blob或arrayBuffer进行进一步处理
+                resolve({ blob: blob, arrayBuffer: arrayBuffer, buffer: buffer})
+              });
               stream.on('error', () => {reject(false)});
           })
     })
@@ -253,71 +354,6 @@ async function downloadMedia (mediaId, downloadPath) {
     return false;
   }
 };
-
-async function createDirectoryIfNotExists (directoryPath) {
-  try {
-    await fs.promises.access(directoryPath, fs.constants.R_OK | fs.constants.W_OK);
-    console.log('目录已存在');
-    return true;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      try {
-        await fs.promises.mkdir(directoryPath, { recursive: true });
-        console.log('目录已创建');
-        return true;
-      } catch (error) {
-        console.error('创建目录时发生错误:', error);
-        return false;
-      }
-    } else {
-      console.error('访问目录时发生错误:', error);
-      return false;
-    }
-  }
-};
-
-async function changeDirectoryPermissions (directoryPath) {
-  const permissions = 0o777;
-  try {
-    await fs.promises.chmod(directoryPath, permissions);
-    console.log('目录权限已成功更改');
-    return true;
-  } catch (error) {
-    console.error('更改目录权限时发生错误:', error);
-    return false;
-  }
-};
-
-
-// 获取Line媒体ID的API端点
-router.get('/media/:mediaId', async (req, res) => {
-  try {
-    const mediaId = req.params.mediaId;
-
-    // 获取媒体文件的URL
-    const response = await client.getMessageContent(mediaId);
-    const contentType = response.headers['content-type'];
-    const fileExtension = contentType.split('/')[1];
-    const fileUrl = `https://api.line.me/v2/bot/message/${mediaId}/content`;
-
-    // 使用Axios下载媒体文件
-    const downloadResponse = await axios.get(fileUrl, { responseType: 'arraybuffer' });
-    const imageData = Buffer.from(downloadResponse.data, 'binary');
-
-    // 在Deta Space中存储图像文件
-    const driveResponse = await detaSpace.put(fileExtension, imageData);
-
-    // 构建图像文件的公共URL
-    const fileKey = driveResponse.key;
-    const filePublicUrl = `https://FirstDeta.deta.dev/drive/${fileKey}`;
-
-    // 返回图像文件的公共URL
-    res.json({ success: true, url: filePublicUrl });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: 'Failed to process media' });
-  }
-});
 
 
 module.exports = router;

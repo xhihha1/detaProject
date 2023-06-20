@@ -5,9 +5,9 @@ const line = require('@line/bot-sdk');
 const { Blob } = require('buffer');
 
 const config = {
-    channelAccessToken: '',
-    channelSecret: ''
-  };
+  channelAccessToken: '',
+  channelSecret: ''
+};
   
 const client = new line.Client(config);
 async function downloadMedia (mediaId) {
@@ -56,12 +56,31 @@ async function downloadMedia (mediaId) {
     }
   };
 
+// 廣播傳送圖片訊息函式
+async function broadcastImageMessage(imageUrl) {
+  try {
+    const message = [{
+      type: 'image',
+      originalContentUrl: "https://firstdeta-1-g8734942.deta.app/lineBot/media/load/460363401131459014",
+      previewImageUrl: "https://firstdeta-1-g8734942.deta.app/lineBot/media/load/460363401131459014"
+    }];
+
+    const response = await client.broadcast(message);
+
+    console.log('圖片訊息廣播傳送成功:', response);
+  } catch (error) {
+    console.error('圖片訊息廣播傳送失敗:', error);
+  }
+}
+
 //   downloadMedia(459928372316209585)
 async function A (){
   const r = await downloadMedia('459929690619511002')
   console.log(r)
   const b = await blobMedia('459929690619511002')
   console.log(b)
+  await broadcastImageMessage('https://firstdeta-1-g8734942.deta.app/lineBot/media/load/460363401131459014')
+  // await broadcastImageMessage('https://firstdeta-1-g8734942.deta.app/page/asset/yui.png')
 }
 
 A()

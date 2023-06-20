@@ -1,9 +1,9 @@
 var express = require('express');
 var router = express.Router();
 
-router.use(express.json());
+// router.use(express.json());
 
-router.post('/submitConfig', (req, res) => {
+router.post('/submitConfig',express.json(), (req, res) => {
   const {
     channelAccessToken,
     channelSecret,
@@ -18,3 +18,6 @@ router.post('/submitConfig', (req, res) => {
 
   res.send('表單提交成功！');
 });
+
+
+module.exports = router;

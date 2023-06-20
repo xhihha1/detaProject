@@ -1,7 +1,9 @@
 var express = require('express');
 var router = express.Router();
 const line = require('@line/bot-sdk');
-const { Blob } = require('buffer');
+const {
+  Blob
+} = require('buffer');
 const fs = require('fs');
 const {
   Readable
@@ -61,45 +63,105 @@ router.get('/media/save/:mediaId', async (req, res) => {
 })
 
 router.get('/media/load/:mediaId', async (req, res) => {
+  // const mediaId = req.params.mediaId;
+  // const deta = Deta(process.env.DETA_DATA_KEY);
+  // const drive = deta.Drive("simple_drive");
+  // const key = mediaId;
+  // const extension = 'jpg';
+  // const item = await drive.get(`${key}.${extension}`);
+  // const buffer = await item.arrayBuffer();
+  // const responseItem = Buffer.from(buffer);
+  // res.setHeader('Content-Type', 'image/jpeg');
+  // res.send(responseItem);
   const mediaId = req.params.mediaId;
   const deta = Deta(process.env.DETA_DATA_KEY);
   const drive = deta.Drive("simple_drive");
-  const key = mediaId;
-  const extension = 'jpg';
-  const item = await drive.get(`${key}.${extension}`);
+  const db = deta.Base("simple_db");
+  let extension = 'jpg';
+  let contentType = 'image/jpeg';
+  const mediaExtItem = await db.get(mediaId);
+  if (mediaExtItem && mediaExtItem.ext) {
+    extension = mediaExtItem.ext;
+  }
+  if (extension === 'mp4') {
+    contentType = 'video/mp4';
+  }
+  if (extension === 'm4a') {
+    contentType = 'audio/m4a';
+  }
+  const item = await drive.get(`${mediaId}.${extension}`);
   const buffer = await item.arrayBuffer();
   const responseItem = Buffer.from(buffer);
-  res.setHeader('Content-Type', 'image/jpeg');
-  res.send(responseItem);
-
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('content-type', contentType);
+  res.set('content-type', contentType);
+  if (extension !== 'jpg') {
+    // 設置檔案名稱和附檔名
+    const contentDisposition = `attachment; filename=${mediaId}.${extension}`;
+    res.setHeader('Content-Disposition', contentDisposition);
+  }
+  res.status(200).send(responseItem);
 })
 
-async function blobMedia (mediaId) {
+async function blobMedia(mediaId) {
   try {
     return new Promise((resolve, reject) => {
-        client.getMessageContent(mediaId)
-          .then((stream) => {
-            const buffers = [];
-              stream.on('data', (chunk) => {buffers.push(chunk);});
-              stream.on('end', () => {
-                // 合并所有Buffer为一个Buffer
-                const buffer = Buffer.concat(buffers);
-                // 将Buffer转换为Blob
-                const blob = new Blob([buffer], {
-                    type: 'application/octet-stream'
-                });
-                // 将Buffer转换为ArrayBuffer
-                const arrayBuffer = buffer.buffer;
-                // 在这里可以对blob或arrayBuffer进行进一步处理
-                resolve({ blob: blob, arrayBuffer: arrayBuffer, buffer: buffer})
-              });
-              stream.on('error', () => {reject(false)});
-          })
+      client.getMessageContent(mediaId)
+        .then((stream) => {
+          const buffers = [];
+          stream.on('data', (chunk) => {
+            buffers.push(chunk);
+          });
+          stream.on('end', () => {
+            // 合并所有Buffer为一个Buffer
+            const buffer = Buffer.concat(buffers);
+            // 将Buffer转换为Blob
+            const blob = new Blob([buffer], {
+              type: 'application/octet-stream'
+            });
+            // 将Buffer转换为ArrayBuffer
+            const arrayBuffer = buffer.buffer;
+            // 在这里可以对blob或arrayBuffer进行进一步处理
+            resolve({
+              blob: blob,
+              arrayBuffer: arrayBuffer,
+              buffer: buffer
+            })
+          });
+          stream.on('error', () => {
+            reject(false)
+          });
+        })
     })
   } catch (error) {
     console.log(`下载媒体文件失败: ${error.message}`);
     return false;
   }
 };
+
+router.get('/broadcast/:mediaId', async (req, res) => {
+  const mediaId = req.params.mediaId;
+  let result = false;
+  const protocol = req.protocol;
+  const host = req.get('host');
+  const currentUrl = `https://${host}`;
+  try {
+    const message = [{
+      type: 'image',
+      originalContentUrl: `${currentUrl}/lineBot/media/load/${mediaId}`,
+      previewImageUrl: `${currentUrl}/lineBot/media/load/${mediaId}`
+    }];
+
+    const response = await client.broadcast(message);
+
+    console.log('圖片訊息廣播傳送成功:', response);
+    result = true;
+    res.status(200).json({result:result, message: message});
+  } catch (error) {
+    console.error('圖片訊息廣播傳送失敗:', error);
+    res.status(200).json({result:result, message: error});
+  }
+})
 
 module.exports = router;
