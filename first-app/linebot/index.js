@@ -39,9 +39,21 @@ function lineBotMiddleware(req, res, next) {
   const config = setting.getLineConfig()
   if (!config) {
     res.status(403).send('Access line config denied');
+  } else {
+    console.log('--------')
+    console.log(config)
+    // 使用 line.middleware 驗證 LINE Bot 請求
+    line.middleware(config)(req, res, next);
   }
-  // 使用 line.middleware 驗證 LINE Bot 請求
-  line.middleware(config)(req, res, next);
+}
+
+function lineClientMiddleware(req, res, next) {
+  const config = setting.getLineConfig()
+  if (!config) {
+    res.status(403).send('Access line config denied');
+  } else {
+    next()
+  }
 }
 
 // line bot webhook can't use express.json middleware
@@ -88,7 +100,7 @@ router.get("/search", express.json(), async (req, res) => {
 });
 
 
-router.post('/send-line-bot-message', express.json(), (req, res) => {
+router.post('/send-line-bot-message', lineClientMiddleware, express.json(), (req, res) => {
   const client = setting.getLineClient()
   const { message } = req.body;
   
@@ -109,7 +121,7 @@ router.post('/send-line-bot-message', express.json(), (req, res) => {
     });
 });
 
-router.get('/send-line-broadcast-message/:msg', express.json(), (req, res) => {
+router.get('/send-line-broadcast-message/:msg', lineClientMiddleware, express.json(), (req, res) => {
   const msg = req.params.msg;
   const client = setting.getLineClient()
 
@@ -283,7 +295,7 @@ async function replyWithMediaMessage(replyToken, message, messageType, messageId
 
 
 // 获取Line媒体ID的並儲存
-router.get('/media/save/:mediaId', async (req, res) => {
+router.get('/media/save/:mediaId', lineClientMiddleware, async (req, res) => {
   const mediaId = req.params.mediaId;
   const deta = Deta(process.env.DETA_DATA_KEY);
   // const db = deta.Base(process.env.BASE_NAME || 'simple_db');

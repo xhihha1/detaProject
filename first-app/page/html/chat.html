@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Line-style Chatroom</title>
+  <style>
+    /* Add your custom CSS styles here */
+  </style>
+</head>
+<body>
+  <div id="messages"></div>
+  <form id="chat-form">
+    <input type="text" id="message-input" placeholder="Type your message...">
+    <button type="submit">Send</button>
+    <input type="file" id="image-input">
+  </form>
+
+  <script>
+    var socket = new WebSocket(`wss://${location.host}/ss`);
+
+    // Handle WebSocket connection open
+    socket.onopen = () => {
+      console.log('WebSocket connection established.');
+    };
+
+    // Handle WebSocket messages
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+
+      // Handle text messages
+      if (message.type === 'text') {
+        displayTextMessage(message.text);
+      }
+
+      // Handle image messages
+      if (message.type === 'image') {
+        displayImageMessage(message.image);
+      }
+    };
+
+    // Handle form submission
+    document.getElementById('chat-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const inputElement = document.getElementById('message-input');
+      const message = inputElement.value;
+
+      // Send text message to the server
+      socket.send(JSON.stringify({ type: 'text', text: message }));
+
+      // Clear the input field
+      inputElement.value = '';
+    });
+
+    // Handle image selection
+    document.getElementById('image-input').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      // Read the image file
+      reader.readAsDataURL(file);
+
+      // When the image is loaded, send it to the server
+      reader.onload = () => {
+        const image = reader.result;
+
+        // Send image message to the server
+        socket.send(JSON.stringify({ type: 'image', image: image }));
+      };
+    });
+
+    // Display a text message in the chat window
+    function displayTextMessage(message) {
+      const messagesContainer = document.getElementById('messages');
+      const messageElement = document.createElement('div');
+      messageElement.textContent = message;
+      messagesContainer.appendChild(messageElement);
+    }
+
+    // Display an image message in the chat window
+    function displayImageMessage(image) {
+      const messagesContainer = document.getElementById('messages');
+      const imageElement = document.createElement('img');
+      imageElement.src = image;
+      messagesContainer.appendChild(imageElement);
+    }
+  </script>
+</body>
+</html>

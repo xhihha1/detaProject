@@ -20,6 +20,14 @@ const {
 
 // const client = new line.Client(config);
 
+function lineClientMiddleware(req, res, next) {
+  const config = setting.getLineConfig()
+  if (!config) {
+    res.status(403).send('Access line config denied');
+  }
+  next()
+}
+
 // 获取Line媒体ID的API端点
 router.get('/media/:mediaId', async (req, res) => {
   const mediaId = req.params.mediaId;
@@ -37,7 +45,7 @@ router.get('/media/:mediaId', async (req, res) => {
 
 })
 
-router.get('/media/save/:mediaId', async (req, res) => {
+router.get('/media/save/:mediaId', lineClientMiddleware, async (req, res) => {
   const mediaId = req.params.mediaId;
   const deta = Deta(process.env.DETA_DATA_KEY);
   // const db = deta.Base(process.env.BASE_NAME || 'simple_db');
@@ -133,7 +141,7 @@ async function blobMedia(mediaId) {
   }
 };
 
-router.get('/broadcast/:mediaId', async (req, res) => {
+router.get('/broadcast/:mediaId', lineClientMiddleware, async (req, res) => {
   const client = setting.getLineClient()
   const mediaId = req.params.mediaId;
   let result = false;

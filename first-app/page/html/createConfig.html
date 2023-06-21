@@ -51,6 +51,10 @@
         <input type="text" id="channelSecret" name="channelSecret" required>
       </div>
       <div class="form-field">
+        <label for="channelUserID">Channel UserID</label>
+        <input type="text" id="channelUserID" name="channelUserID" required>
+      </div>
+      <div class="form-field">
         <label for="googleAPIKey">Google API Key</label>
         <input type="text" id="googleAPIKey" name="googleAPIKey" required>
       </div>
@@ -98,6 +102,20 @@
           // 在此處處理錯誤
         });
     }
+
+    function getConfig() {
+        fetch('/formConfig/getConfig')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('channelAccessToken').value = data.channelAccessToken;
+                document.getElementById('channelSecret').value = data.channelSecret;
+                document.getElementById('channelUserID').value = data.channelUserID;
+                document.getElementById('googleAPIKey').value = data.googleAPIKey;
+                document.getElementById('googleSearchEngineId').value = data.googleSearchEngineId;
+            })
+            .catch(error => {})
+    }
+    getConfig()
   </script>
 </body>
 
