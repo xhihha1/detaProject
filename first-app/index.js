@@ -11,6 +11,7 @@ const routes = require('./simpleJson/index');
 const formConfig = require('./simpleJson/formConfig');
 const linebot = require('./linebot/index');
 const testbot = require('./linebot/testapi');
+const chatMsg = require('./chatMsg/index');
 
 const wsInstance = expressWs(app);
 
@@ -18,6 +19,7 @@ app.use(cors())
 app.use('/lineBot', linebot); // line bot webhook can't use express.json
 app.use('/testBot', testbot);
 app.use('/formConfig', formConfig);
+app.use('/chatMsg', chatMsg);
 
 
 // 将指定的目录设置为静态目录

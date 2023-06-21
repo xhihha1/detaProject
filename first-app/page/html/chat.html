@@ -1,89 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Line-style Chatroom</title>
+  <title>Chat Room</title>
   <style>
-    /* Add your custom CSS styles here */
+    body {
+      background-color: #6B3E9C;
+      color: #FFFFFF;
+      font-family: Arial, sans-serif;
+    }
+
+    #messages {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #FFFFFF;
+      color: #000000;
+    }
+
+    #message-form {
+      margin-top: 10px;
+    }
+
+    #message-input {
+      width: 300px;
+    }
+
+    #image-input {
+      margin-top: 10px;
+    }
+
+    #send-button {
+      background-color: #FF2300;
+      color: #FFFFFF;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    #send-button:hover {
+      background-color: #FEDF00;
+    }
   </style>
 </head>
 <body>
   <div id="messages"></div>
-  <form id="chat-form">
-    <input type="text" id="message-input" placeholder="Type your message...">
-    <button type="submit">Send</button>
+
+  <form id="message-form">
+    <input type="text" id="message-input" placeholder="Enter your message">
     <input type="file" id="image-input">
+    <button type="submit" id="send-button">Send</button>
   </form>
 
   <script>
-    var socket = new WebSocket(`wss://${location.host}/ss`);
+    const messagesDiv = document.getElementById('messages');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const imageInput = document.getElementById('image-input');
 
-    // Handle WebSocket connection open
-    socket.onopen = () => {
-      console.log('WebSocket connection established.');
-    };
+    // EventSource
+    const eventSource = new EventSource(`/chatMsg/sse`);
 
-    // Handle WebSocket messages
-    socket.onmessage = (event) => {
+    eventSource.addEventListener('message', (event) => {
       const message = JSON.parse(event.data);
+      displayMessage(message);
+    });
 
-      // Handle text messages
-      if (message.type === 'text') {
-        displayTextMessage(message.text);
-      }
-
-      // Handle image messages
-      if (message.type === 'image') {
-        displayImageMessage(message.image);
-      }
-    };
-
-    // Handle form submission
-    document.getElementById('chat-form').addEventListener('submit', (event) => {
+    // Submit message
+    messageForm.addEventListener('submit', (event) => {
       event.preventDefault();
 
-      const inputElement = document.getElementById('message-input');
-      const message = inputElement.value;
-
-      // Send text message to the server
-      socket.send(JSON.stringify({ type: 'text', text: message }));
-
-      // Clear the input field
-      inputElement.value = '';
+      const message = messageInput.value;
+      if (message) {
+        sendMessage(message);
+        messageInput.value = '';
+      }
     });
 
-    // Handle image selection
-    document.getElementById('image-input').addEventListener('change', (event) => {
+    // Submit image
+    imageInput.addEventListener('change', (event) => {
       const file = event.target.files[0];
-      const reader = new FileReader();
-
-      // Read the image file
-      reader.readAsDataURL(file);
-
-      // When the image is loaded, send it to the server
-      reader.onload = () => {
-        const image = reader.result;
-
-        // Send image message to the server
-        socket.send(JSON.stringify({ type: 'image', image: image }));
-      };
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const imageData = reader.result;
+          sendImage(imageData);
+          imageInput.value = '';
+        };
+        reader.readAsDataURL(file);
+      }
     });
 
-    // Display a text message in the chat window
-    function displayTextMessage(message) {
-      const messagesContainer = document.getElementById('messages');
-      const messageElement = document.createElement('div');
-      messageElement.textContent = message;
-      messagesContainer.appendChild(messageElement);
+    // Send message
+    function sendMessage(message) {
+      fetch('/chatMsg/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message })
+      });
     }
 
-    // Display an image message in the chat window
-    function displayImageMessage(image) {
-      const messagesContainer = document.getElementById('messages');
-      const imageElement = document.createElement('img');
-      imageElement.src = image;
-      messagesContainer.appendChild(imageElement);
+    // Send image
+    function sendImage(imageData) {
+      fetch('/chatMsg/image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ image: imageData })
+      });
+    }
+
+    // Display message
+    function displayMessage(message) {
+      const messageElement = document.createElement('div');
+      const contentElement = document.createElement('p');
+
+      if (message.type === 'text') {
+        contentElement.textContent = message.content;
+      } else if (message.type === 'image') {
+        const imageElement = document.createElement('img');
+        imageElement.src = message.content;
+        imageElement.style.maxWidth = '300px';
+        contentElement.appendChild(imageElement);
+      }
+
+      messageElement.appendChild(contentElement);
+      messagesDiv.appendChild(messageElement);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
   </script>
 </body>
