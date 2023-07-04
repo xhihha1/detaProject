@@ -58,12 +58,21 @@
     const imageInput = document.getElementById('image-input');
 
     // EventSource
-    const eventSource = new EventSource(`/chatMsg/sse`);
-
-    eventSource.addEventListener('message', (event) => {
-      const message = JSON.parse(event.data);
-      displayMessage(message);
-    });
+    function connect() {
+      const eventSource = new EventSource(`/chatMsg/sse`);
+      eventSource.addEventListener('message', (event) => {
+        const message = JSON.parse(event.data);
+        displayMessage(message);
+      });
+      eventSource.addEventListener('stat', function (e) {
+        console.log(e.data)
+      });
+      eventSource.onerror = function (err) {
+        eventSource.close();
+        connect();
+      }
+    }
+    connect();
 
     // Submit message
     messageForm.addEventListener('submit', (event) => {
