@@ -70,11 +70,11 @@
 <body>
   <h1>留言板</h1>
 
-  <form id="message-form">
+  <form id="message-form" enctype="multipart/form-data">
     <h2>發布留言</h2>
-    <input type="text" id="name-input" placeholder="姓名">
-    <textarea id="message-input" placeholder="留言內容"></textarea>
-    <input type="file" id="image-input">
+    <input type="text" id="name-input" placeholder="姓名" name="name">
+    <textarea id="message-input" placeholder="留言內容" name="message"></textarea>
+    <input type="file" id="image-input" name="photos">
     <button type="submit" id="send-button">發布</button>
   </form>
 
@@ -95,27 +95,28 @@
       const message = messageInput.value;
 
       if (name && message) {
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('message', message);
+        const formData = new FormData(messageForm);
+        // formData.append('name', name);
+        // formData.append('message', message);
 
         // 检查是否有选择图片
-        if (imageInput.files.length > 0) {
-          const imageFile = imageInput.files[0];
-          console.log('imageFile', imageFile)
-          formData.append('image', imageFile);
-        }
+        // if (imageInput.files.length > 0) {
+        //   const imageFile = imageInput.files[0];
+        //   console.log('imageFile', imageFile)
+        //   formData.append('photos', imageFile);
+        // }
         // const requestBody = {};
         // // 將表單資訊轉換為 JSON 物件
         // for (const [key, value] of formData.entries()) {
         //     console.log(`${key}:${value}`)
         //     requestBody[key] = value;
         // }
+        // /forum/messages
         fetch('/forum/messages', {
           method: 'POST',
           headers: {
             // 'Content-Type': 'application/json'
-            'Content-Type': 'multipart/form-data; boundary=' + formData._boundary
+            // 'Content-Type': 'multipart/form-data; boundary=' + formData._boundary
           },
         //   body: JSON.stringify(Object.fromEntries(formData))
           body: formData
@@ -135,7 +136,16 @@
         });
       }
     });
-
+    
+  function arrayBufferToBase64( buffer ) {
+    var binary = '';
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+      binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+  }
     // 获取并显示所有留言
     function getMessages() {
       fetch('/forum/messages')
@@ -143,10 +153,12 @@
         .then(data => {
           // 清空留言板
           messagesDiv.innerHTML = '';
-
+          window.globalMsg = data;
           // 显示每个留言
           data.forEach(message => {
-            displayMessage(message);
+            if (message.message) {
+              displayMessage(message);
+            }
           });
         })
         .catch(error => {
@@ -158,6 +170,7 @@
     function displayMessage(message) {
       const messageElement = document.createElement('div');
       messageElement.className = 'message';
+      messageElement.dataset.messageId = message.key;
 
       const nameElement = document.createElement('h3');
       nameElement.textContent = message.name;
@@ -171,33 +184,47 @@
 
       // 如果有图片，显示图片
       if (message.image) {
-        const imageElement = document.createElement('img');
-        imageElement.src = message.image;
-        imageElement.style.maxWidth = '200px';
-        imageElement.style.marginTop = '10px';
-
-        messageElement.appendChild(imageElement);
+        const imgItem = window.globalMsg.find((item) => {
+          if (message.image === item.key) {
+            return true;
+          }
+          return false;
+        })
+        if (imgItem) {
+          const imageElement = document.createElement('img');
+          imageElement.src = arrayBufferToBase64(imgItem.value.data);
+          imageElement.style.maxWidth = '200px';
+          imageElement.style.marginTop = '10px';
+          messageElement.appendChild(imageElement);
+        }
       }
 
       // 添加回复表单
-      const replyForm = createReplyForm(message.id);
+      const replyForm = createReplyForm(message.key);
       messageElement.appendChild(replyForm);
 
       messagesDiv.appendChild(messageElement);
+      if (message && message.replies) {
+        message.replies.forEach((reply) => {
+          displayReply(message.key, reply)
+        })
+      }
     }
 
     // 创建回复表单
     function createReplyForm(messageId) {
-      const replyForm = document.createElement('div');
+      const replyForm = document.createElement('form');
       replyForm.className = 'reply-form';
 
       const nameInput = document.createElement('input');
       nameInput.type = 'text';
       nameInput.placeholder = '姓名';
+      nameInput.name = 'name';
       replyForm.appendChild(nameInput);
 
       const messageInput = document.createElement('textarea');
       messageInput.placeholder = '回覆內容';
+      messageInput.name = 'message';
       replyForm.appendChild(messageInput);
 
       const replyButton = document.createElement('button');
@@ -205,14 +232,15 @@
       replyForm.appendChild(replyButton);
 
       // 回复留言
-      replyButton.addEventListener('click', () => {
+      replyButton.addEventListener('click', (event) => {
+        event.preventDefault();
         const name = nameInput.value;
         const message = messageInput.value;
 
         if (name && message) {
-          const formData = new FormData();
-          formData.append('name', name);
-          formData.append('message', message);
+          const formData = new FormData(replyForm);
+          // formData.append('name', name);
+          // formData.append('message', message);
 
           fetch(`/forum/messages/${messageId}/reply`, {
             method: 'POST',

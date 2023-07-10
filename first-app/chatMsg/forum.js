@@ -1,13 +1,17 @@
 var express = require('express');
+const multer = require('multer');
 var router = express.Router();
 const {
   Deta
 } = require('deta');
 
-router.use(express.json());
+const storage = multer.memoryStorage()
+const upload = multer({ storage: storage })
+
+// router.use(express.json());
 
 // 获取所有留言
-router.get('/messages', async (req, res) => {
+router.get('/messages', express.json(), async (req, res) => {
   try {
     const deta = Deta(process.env.DETA_DATA_KEY);
     const db = deta.Base("forum_db");
@@ -29,19 +33,20 @@ router.get('/messages', async (req, res) => {
   }
 });
 
+const cpUpload = upload.fields([{ name: 'photos', maxCount: 1 }])
 // 创建留言
-router.post('/messages', async (req, res) => {
+router.post('/messages', cpUpload, async (req, res) => {
   try {
     const {
       name,
-      message,
-      image
+      message
     } = req.body;
 
     const data = {
       name,
       message
     };
+    const image = req.files['photos'][0];
     const deta = Deta(process.env.DETA_DATA_KEY);
     const db = deta.Base("forum_db");
 
@@ -61,8 +66,9 @@ router.post('/messages', async (req, res) => {
   }
 });
 
+const uploadReply = multer()
 // 创建回复
-router.post('/messages/:messageId/reply', async (req, res) => {
+router.post('/messages/:messageId/reply', uploadReply.none(), async (req, res) => {
   try {
     const {
       messageId
@@ -73,8 +79,8 @@ router.post('/messages/:messageId/reply', async (req, res) => {
     } = req.body;
 
     const data = {
-      name,
-      message
+      name: name,
+      message: message
     };
 
     const deta = Deta(process.env.DETA_DATA_KEY);
