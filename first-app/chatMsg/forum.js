@@ -46,11 +46,11 @@ router.post('/messages', cpUpload, async (req, res) => {
       name,
       message
     };
-    const image = req.files['photos'][0];
+    const image = req.files || req.files['photos'] || req.files['photos'][0];
     const deta = Deta(process.env.DETA_DATA_KEY);
     const db = deta.Base("forum_db");
 
-    if (image) {
+    if (image &&　image.buffer) {
       const imageFile = await db.put(image.buffer);
       data.image = imageFile.key;
     }
@@ -66,7 +66,24 @@ router.post('/messages', cpUpload, async (req, res) => {
   }
 });
 
+
 const uploadReply = multer()
+// 删除留言
+router.delete('/messages/:messageId', uploadReply.none(), async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const deta = Deta(process.env.DETA_DATA_KEY);
+    const db = deta.Base("forum_db");
+
+    await db.delete(messageId);
+
+    res.sendStatus(204);
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    res.status(500).json({ error: 'Failed to delete message' });
+  }
+});
+
 // 创建回复
 router.post('/messages/:messageId/reply', uploadReply.none(), async (req, res) => {
   try {
