@@ -1,0 +1,258 @@
+:root {
+  --purple: #6B3E9C;
+  --white: #ffffff;
+  --red: #FF2300;
+  --yellow: #FEDF00;
+  --black: #000000;
+  --blue: #0096C9;
+  --green: #008000;
+  --orange: #FFA500;
+
+}
+
+body {
+  background-color: var(--black);
+  color: var(--red);
+  font-family: Arial, sans-serif;
+  /* border: 1px solid var(--red); */
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+#message-form-div {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+#message-form {
+  margin-bottom: 20px;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#message-form input,
+#message-form textarea {
+  display: block;
+  margin-bottom: 10px;
+}
+
+textarea,
+input[type=text],
+input[type=password],
+input[type=date] {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+input[type=submit] {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+input[type=checkbox] {
+  margin-right: 10px;
+}
+
+#message-form button {
+  background-color: #FF2300;
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+#message-form button:hover {
+  background-color: #FEDF00;
+}
+
+.message {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: transparent;
+  color: var(--green);
+  /* border: 1px solid var(--yellow); */
+  padding: 5px;
+  box-sizing: border-box;
+  justify-content: space-between;
+  align-items: center;
+  align-content: flex-start;
+}
+
+.messageTop {
+  padding: 5px;
+}
+
+.messageBottom {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  border: 1px solid var(--red);
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.message-content {
+  margin-bottom: 10px;
+}
+
+.reply-form {
+  margin-left: 20px;
+}
+
+.reply-form input,
+.reply-form textarea {
+  display: block;
+  margin-bottom: 10px;
+  width: 250px;
+}
+
+.reply-form button {
+  background-color: #0096C9;
+  color: #FFFFFF;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.reply-form button:hover {
+  background-color: #FEDF00;
+}
+
+.reply {
+  position: relative;
+  display: flex;
+  width: 50%;
+}
+
+.reply:nth-child(3n+1) .divName:before {
+  border-right-color: var(--purple);
+}
+
+.reply:nth-child(3n+1) .divName:after {
+  border-left-color: var(--purple);
+}
+
+.reply:nth-child(3n+1) .divName {
+  background: var(--purple);
+  color: var(--black);
+}
+
+.reply:nth-child(3n+2) .divName:before {
+  border-right-color: var(--blue);
+}
+
+.reply:nth-child(3n+2) .divName:after {
+  border-left-color: var(--blue);
+}
+
+.reply:nth-child(3n+2) .divName {
+  background: var(--blue);
+  color: var(--white);
+}
+
+.reply:nth-child(3n) .divName:before {
+  border-right-color: var(--red);
+}
+
+.reply:nth-child(3n) .divName:after {
+  border-left-color: var(--red);
+}
+
+.reply:nth-child(3n) .divName {
+  background: var(--red);
+  color: var(--yellow);
+}
+
+.divName:before {
+  content: "";
+  width: 0px;
+  border-bottom: 24px solid transparent;
+  border-top: 24px solid transparent;
+  border-right-width: 12px;
+  border-right-style: solid;
+  border-right-color: var(--red);
+  position: absolute;
+  left: -12px;
+  top: 0px;
+}
+
+.divName {
+  min-width: 30px;
+  height: 48px;
+  background: var(--red);
+  display: inline-block;
+  position: relative;
+  line-height: 48px;
+  color: var(--black);
+  font-size: 16px;
+  text-align: center;
+  margin: 5px 12px;
+  /* overflow: hidden; */
+  text-overflow: clip;
+  /* transition: transform 0.5s; */
+}
+
+.divName:hover {
+  /* transform: rotate(360deg); */
+  animation: blink 1s 2; /* 在hover时应用闪烁动画，持续1秒，重复2次 */
+}
+
+.divName span {
+  display: inline-block;
+  width: 32px;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.divName:after {
+  content: "";
+  width: 0px;
+  border-bottom: 24px solid transparent;
+  border-top: 24px solid transparent;
+  border-left-width: 12px;
+  border-left-style: solid;
+  border-left-color: var(--red);
+  position: absolute;
+  right: -12px;
+  top: 0px;
+}
+
+.divP {
+  line-height: 48px;
+  color: var(--red);
+  margin: 5px 5px;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Responsive styles */
+@media only screen and (max-width: 768px) {
+  #message-form-div {
+    max-width: 500px;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  #message-form-div {
+    max-width: 300px;
+  }
+}

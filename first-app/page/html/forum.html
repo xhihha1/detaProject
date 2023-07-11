@@ -1,82 +1,25 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>留言板</title>
+  <link rel="stylesheet" type="text/css" href="../css/forum.css">
   <style>
-    body {
-      background-color: #6B3E9C;
-      color: #FFFFFF;
-      font-family: Arial, sans-serif;
-    }
-
-    #message-form {
-      margin-bottom: 20px;
-    }
-
-    #message-form input,
-    #message-form textarea {
-      display: block;
-      margin-bottom: 10px;
-      width: 300px;
-    }
-
-    #message-form button {
-      background-color: #FF2300;
-      color: #FFFFFF;
-      border: none;
-      padding: 8px 16px;
-      cursor: pointer;
-    }
-
-    #message-form button:hover {
-      background-color: #FEDF00;
-    }
-
-    .message {
-      margin-bottom: 20px;
-      padding: 10px;
-      background-color: #FFFFFF;
-      color: #000000;
-    }
-
-    .message-content {
-      margin-bottom: 10px;
-    }
-
-    .reply-form {
-      margin-left: 20px;
-    }
-
-    .reply-form input,
-    .reply-form textarea {
-      display: block;
-      margin-bottom: 10px;
-      width: 250px;
-    }
-
-    .reply-form button {
-      background-color: #0096C9;
-      color: #FFFFFF;
-      border: none;
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-
-    .reply-form button:hover {
-      background-color: #FEDF00;
-    }
+    
   </style>
 </head>
+
 <body>
   <h1>留言板</h1>
-
-  <form id="message-form" enctype="multipart/form-data">
+  <div id="message-form-div">
     <h2>發布留言</h2>
-    <input type="text" id="name-input" placeholder="姓名" name="name">
-    <textarea id="message-input" placeholder="留言內容" name="message"></textarea>
-    <input type="file" id="image-input" name="photos">
-    <button type="submit" id="send-button">發布</button>
-  </form>
+    <form id="message-form" enctype="multipart/form-data">
+      <input type="text" id="name-input" placeholder="姓名" name="name">
+      <textarea id="message-input" placeholder="留言內容" name="message"></textarea>
+      <input type="file" id="image-input" name="photos">
+      <button type="submit" id="send-button">發布</button>
+    </form>
+  </div>
 
   <div id="messages"></div>
 
@@ -113,39 +56,39 @@
         // }
         // /forum/messages
         fetch('/forum/messages', {
-          method: 'POST',
-          headers: {
-            // 'Content-Type': 'application/json'
-            // 'Content-Type': 'multipart/form-data; boundary=' + formData._boundary
-          },
-        //   body: JSON.stringify(Object.fromEntries(formData))
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          // 清除表单内容
-          nameInput.value = '';
-          messageInput.value = '';
-          imageInput.value = '';
+            method: 'POST',
+            headers: {
+              // 'Content-Type': 'application/json'
+              // 'Content-Type': 'multipart/form-data; boundary=' + formData._boundary
+            },
+            //   body: JSON.stringify(Object.fromEntries(formData))
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            // 清除表单内容
+            nameInput.value = '';
+            messageInput.value = '';
+            imageInput.value = '';
 
-          // 添加新留言到留言板
-          displayMessage(data);
-        })
-        .catch(error => {
-          console.error('Error posting message:', error);
-        });
+            // 添加新留言到留言板
+            displayMessage(data);
+          })
+          .catch(error => {
+            console.error('Error posting message:', error);
+          });
       }
     });
-    
-  function arrayBufferToBase64( buffer ) {
-    var binary = '';
-    var bytes = new Uint8Array( buffer );
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-      binary += String.fromCharCode( bytes[ i ] );
+
+    function arrayBufferToBase64(buffer) {
+      var binary = '';
+      var bytes = new Uint8Array(buffer);
+      var len = bytes.byteLength;
+      for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
     }
-    return window.btoa( binary );
-  }
     // 获取并显示所有留言
     function getMessages() {
       fetch('/forum/messages')
@@ -172,6 +115,11 @@
       messageElement.className = 'message';
       messageElement.dataset.messageId = message.key;
 
+      const messageTopElement = document.createElement('div');
+      messageTopElement.className = 'messageTop';
+      const messageBottomElement = document.createElement('div');
+      messageBottomElement.className = 'messageBottom';
+
       const nameElement = document.createElement('h3');
       nameElement.textContent = message.name;
 
@@ -179,8 +127,10 @@
       contentElement.className = 'message-content';
       contentElement.textContent = message.message;
 
-      messageElement.appendChild(nameElement);
-      messageElement.appendChild(contentElement);
+      messageElement.appendChild(messageTopElement);
+      messageElement.appendChild(messageBottomElement);
+      messageTopElement.appendChild(nameElement);
+      messageTopElement.appendChild(contentElement);
 
       // 添加删除按钮
       const deleteButton = document.createElement('button');
@@ -188,7 +138,8 @@
       deleteButton.addEventListener('click', () => {
         deleteMessage(message.key);
       });
-      messageElement.appendChild(deleteButton);
+      // messageElement.appendChild(deleteButton);
+      messageTopElement.appendChild(deleteButton);
 
       // 如果有图片，显示图片
       if (message.image) {
@@ -203,13 +154,13 @@
           imageElement.src = arrayBufferToBase64(imgItem.value.data);
           imageElement.style.maxWidth = '200px';
           imageElement.style.marginTop = '10px';
-          messageElement.appendChild(imageElement);
+          messageTopElement.appendChild(imageElement);
         }
       }
 
       // 添加回复表单
       const replyForm = createReplyForm(message.key);
-      messageElement.appendChild(replyForm);
+      messageTopElement.appendChild(replyForm);
 
       messagesDiv.appendChild(messageElement);
       if (message && message.replies) {
@@ -251,21 +202,21 @@
           // formData.append('message', message);
 
           fetch(`/forum/messages/${messageId}/reply`, {
-            method: 'POST',
-            body: formData
-          })
-          .then(response => response.json())
-          .then(data => {
-            // 清除回复表单内容
-            nameInput.value = '';
-            messageInput.value = '';
+              method: 'POST',
+              body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+              // 清除回复表单内容
+              nameInput.value = '';
+              messageInput.value = '';
 
-            // 显示回复
-            displayReply(messageId, data);
-          })
-          .catch(error => {
-            console.error('Error posting reply:', error);
-          });
+              // 显示回复
+              displayReply(messageId, data);
+            })
+            .catch(error => {
+              console.error('Error posting reply:', error);
+            });
         }
       });
 
@@ -274,17 +225,23 @@
 
     // 在指定留言下显示回复
     function displayReply(messageId, reply) {
-      const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+      const messageElement = document.querySelector(`[data-message-id="${messageId}"] .messageBottom`);
 
       if (messageElement) {
         const replyElement = document.createElement('div');
         replyElement.className = 'reply';
 
         const nameElement = document.createElement('strong');
-        nameElement.textContent = reply.name;
+        nameElement.className = 'divName';
+        const nameTextElement = document.createElement('span');
+        nameTextElement.textContent = reply.name || 'NERV';
+        nameTextElement.title = reply.name || 'NERV';
+        // nameTextElement.textContent = reply.name;
+        nameElement.appendChild(nameTextElement);
 
         const contentElement = document.createElement('p');
         contentElement.textContent = reply.message;
+        contentElement.className = 'divP';
 
         replyElement.appendChild(nameElement);
         replyElement.appendChild(contentElement);
@@ -296,23 +253,56 @@
     // 删除留言
     function deleteMessage(messageId) {
       fetch(`/forum/messages/${messageId}`, {
-        method: 'DELETE'
-      })
-      .then(response => {
-        if (response.ok) {
-          // 删除成功后刷新留言列表
-          getMessages();
-        } else {
-          console.error('Error deleting message:', response.status);
-        }
-      })
-      .catch(error => {
-        console.error('Error deleting message:', error);
-      });
+          method: 'DELETE'
+        })
+        .then(response => {
+          if (response.ok) {
+            // 删除成功后刷新留言列表
+            getMessages();
+          } else {
+            console.error('Error deleting message:', response.status);
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting message:', error);
+        });
     }
 
     // 初始化留言板
-    getMessages();
+    // getMessages();
+
+    const AA = window.globalMsg = [{
+      "image": "pxcx2cjsz2kk",
+      "key": "8pjwnajaiovq",
+      "message": "bbb",
+      "name": "aa",
+      "replies": [{
+        "message": "444"
+      }, {
+        "message": "fff"
+      }, {
+        "message": "111"
+      }, {
+        "message": "111"
+      }, {
+        "message": "333"
+      }, {
+        "message": "77"
+      }, {
+        "message": "88"
+      }, {
+        "message": "rrr"
+      }, {
+        "message": "vvvv",
+        "name": "aaa"
+      }]
+    }]
+    AA.forEach(message => {
+      if (message.message) {
+        displayMessage(message);
+      }
+    });
   </script>
 </body>
+
 </html>

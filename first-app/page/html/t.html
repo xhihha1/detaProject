@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="hexagonCanvas"></canvas>
+
+    <script>
+        function drawHexagon(context, x, y, radius, sides) {
+            const lineWidth = 2;
+            // context.fillRect(x-radius - lineWidth, y-radius* Math.sin(2 * Math.PI / sides) - lineWidth, 2*radius + 2*lineWidth, 2*radius * Math.sin(2 * Math.PI / sides)+2*lineWidth);
+            // 绘制当前六边形
+            context.beginPath();
+            context.moveTo(x + radius * Math.cos(0), y + radius * Math.sin(0));
+
+            let maxX = x;
+            let maxY = y;
+            let minX = x;
+            let minY = y;
+            for (var j = 1; j <= sides; j++) {
+                var angle = j * (2 * Math.PI / sides);
+                var xPos = x + radius * Math.cos(angle);
+                var yPos = y + radius * Math.sin(angle);
+                context.lineTo(xPos, yPos);
+                maxX = Math.max(maxX, xPos)
+                maxY = Math.max(maxY, yPos)
+                minX = Math.min(minX, xPos)
+                minY = Math.min(minY, yPos)
+            }
+            console.log(maxX,minX,maxX-minX, maxY, minY, maxY-minY)
+            console.log(2*radius,2*radius * Math.sin(2 * Math.PI / sides)+2*lineWidth)
+
+            // 设置六边形的样式
+            context.lineWidth = lineWidth;
+            context.strokeStyle = "black";
+            context.fillStyle = "yellow";
+            context.fill();
+            context.stroke();
+
+            // 结束绘制
+            context.closePath();
+        }
+
+        function drawHexagons(vertices) {
+            // 获取Canvas元素
+            var canvas = document.getElementById("hexagonCanvas");
+            var context = canvas.getContext("2d");
+
+            // 设置Canvas尺寸
+            canvas.width = 400;
+            canvas.height = 400;
+
+            // 定义六边形的参数
+            var radius = 50;
+            var sides = 6;
+
+            // 遍历顶点坐标数组，绘制多个六边形
+            for (var i = 0; i < vertices.length; i++) {
+                var vertex = vertices[i];
+                var x = vertex[0];
+                var y = vertex[1];
+                drawHexagon(context, x, y, radius, sides)
+
+                // // 绘制当前六边形
+                // context.beginPath();
+                // context.moveTo(x + radius * Math.cos(0), y + radius * Math.sin(0));
+
+                // for (var j = 1; j <= sides; j++) {
+                //     var angle = j * (2 * Math.PI / sides);
+                //     var xPos = x + radius * Math.cos(angle);
+                //     var yPos = y + radius * Math.sin(angle);
+                //     context.lineTo(xPos, yPos);
+                // }
+
+                // // 设置六边形的样式
+                // context.lineWidth = 2;
+                // context.strokeStyle = "black";
+                // context.fillStyle = "yellow";
+                // context.fill();
+                // context.stroke();
+
+                // // 结束绘制
+                // context.closePath();
+            }
+        }
+
+        // 定义多组顶点坐标
+        const lineWidth = 2;
+        var radius = 50;
+        const dis = 5;
+        const wis = radius + radius * Math.cos(2 * Math.PI / 6) + dis + lineWidth*2;
+        const his = radius * Math.sin(2 * Math.PI / 6) + dis;
+        // const wisame = 2*radius + 2* radius * Math.cos(2 * Math.PI / 6);
+        const wisame = 2*wis;
+        var vertices = [
+            [50, 100], // 第一个六边形的左顶点坐标
+            [200, 150], // 第二个六边形的左顶点坐标
+            [100, 250] // 第三个六边形的左顶点坐标
+        ];
+        var vertix = [50,50]
+        vertices = [];
+        for(let w = 0; w < 5; w++) {
+            for(let h = 0; h < 5; h++) {
+                if (h%2==0) {
+                    // h*radius*2* Math.sin(2 * Math.PI / 6)
+                    vertices.push([vertix[0] + w * wisame, vertix[1] + his * h]);
+                } else {
+                    vertices.push([vertix[0] + w * wisame + wis, vertix[1] + his * h]);
+                }
+            }
+        }
+
+        // 调用函数绘制多个六边形
+        drawHexagons(vertices);
+    </script>
+
+</body>
+
+</html>
