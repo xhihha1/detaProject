@@ -22,6 +22,7 @@
   </div>
 
   <div id="messages"></div>
+  <canvas id="hexagonCanvas"></canvas>
 
   <script>
     const messageForm = document.getElementById('message-form');
@@ -269,40 +270,44 @@
     }
 
     // 初始化留言板
-    // getMessages();
+    getMessages();
 
-    const AA = window.globalMsg = [{
-      "image": "pxcx2cjsz2kk",
-      "key": "8pjwnajaiovq",
-      "message": "bbb",
-      "name": "aa",
-      "replies": [{
-        "message": "444"
-      }, {
-        "message": "fff"
-      }, {
-        "message": "111"
-      }, {
-        "message": "111"
-      }, {
-        "message": "333"
-      }, {
-        "message": "77"
-      }, {
-        "message": "88"
-      }, {
-        "message": "rrr"
-      }, {
-        "message": "vvvv",
-        "name": "aaa"
-      }]
-    }]
-    AA.forEach(message => {
-      if (message.message) {
-        displayMessage(message);
-      }
-    });
+    // const AA = window.globalMsg = [{
+    //   "image": "pxcx2cjsz2kk",
+    //   "key": "8pjwnajaiovq",
+    //   "message": "bbb",
+    //   "name": "aa",
+    //   "replies": [{
+    //     "message": "444"
+    //   }, {
+    //     "message": "fff"
+    //   }, {
+    //     "message": "111"
+    //   }, {
+    //     "message": "111"
+    //   }, {
+    //     "message": "333"
+    //   }, {
+    //     "message": "77"
+    //   }, {
+    //     "message": "88"
+    //   }, {
+    //     "message": "rrr"
+    //   }, {
+    //     "message": "vvvv",
+    //     "name": "aaa"
+    //   }]
+    // }]
+    // AA.forEach(message => {
+    //   if (message.message) {
+    //     displayMessage(message);
+    //   }
+    // });
+
+
+
   </script>
+  <script src="../js/forum.js"></script>
 </body>
 
 </html>

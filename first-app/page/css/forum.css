@@ -134,6 +134,7 @@ input[type=checkbox] {
   position: relative;
   display: flex;
   width: 50%;
+  overflow: hidden;
 }
 
 .reply:nth-child(3n+1) .divName:before {
@@ -198,7 +199,7 @@ input[type=checkbox] {
   color: var(--black);
   font-size: 16px;
   text-align: center;
-  margin: 5px 12px;
+  margin: 5px 12px 5px 14px;
   /* overflow: hidden; */
   text-overflow: clip;
   /* transition: transform 0.5s; */
@@ -233,6 +234,16 @@ input[type=checkbox] {
   line-height: 48px;
   color: var(--red);
   margin: 5px 5px;
+}
+
+#hexagonCanvas {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  z-index: -5;
 }
 
 @keyframes blink {
