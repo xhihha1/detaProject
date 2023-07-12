@@ -13,6 +13,7 @@ const linebot = require('./linebot/index');
 const testbot = require('./linebot/testapi');
 const chatMsg = require('./chatMsg/index');
 const forumMsg = require('./chatMsg/forum');
+const fileMng = require('./chatMsg/fileMng');
 
 const wsInstance = expressWs(app);
 
@@ -22,6 +23,7 @@ app.use('/testBot', testbot);
 app.use('/formConfig', formConfig);
 app.use('/chatMsg', chatMsg);
 app.use('/forum', forumMsg);
+app.use('/file', fileMng);
 
 
 // 将指定的目录设置为静态目录
