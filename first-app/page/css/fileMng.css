@@ -1,0 +1,101 @@
+:root {
+  --purple: #6B3E9C;
+  --white: #ffffff;
+  --red: #FF2300;
+  --yellow: #FEDF00;
+  --black: #000000;
+  --blue: #0096C9;
+  --green: #008000;
+  --orange: #FFA500;
+  --red1: #800000;
+
+}
+
+body {
+  background-color: var(--black);
+  color: var(--white);
+  font-family: Arial, sans-serif;
+  /* border: 1px solid var(--red); */
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.flexdiv{
+  position: relative;
+  width: 100%;
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: row-reverse;
+  flex-wrap: nowrap;
+}
+.flexdivLeft {
+  position: relative;
+  width: 60%;
+  /* background-color: aqua; */
+  border: 1px solid var(--red1);
+  border-radius: 10px;
+} 
+.flexdivRight {
+  position: relative;
+  width: 40%;
+  /* background-color: brown; */
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  overflow: hidden;
+  border-width: 1px;
+  border-style: dotted;
+  border-color: #A2A2A2;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+.fileLi {
+  position: relative;
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  align-content: flex-start;
+  padding: 5px 10px;
+  line-height: 30px;
+  border-bottom: 1px solid #2A2A2A;
+}
+.fileLi:hover {
+  color: #A2A2A2;
+  border-bottom: 1px solid #A2A2A2;
+}
+
+.fileShow, .fileDelt {
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  color: #A2A2A2;
+  transition: transform 0.5s;
+}
+.fileShow:hover, .fileDelt:hover {
+  transform: rotate(360deg);
+  color: var(--red);
+}
+
+/* Responsive styles */
+@media only screen and (max-width: 768px) {
+  .flexdiv{
+    flex-wrap: wrap;
+  }
+  .flexdivLeft, .flexdivRight {
+    width: 100%;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .flexdivLeft, .flexdivRight {
+    width: 100%;
+  }
+}

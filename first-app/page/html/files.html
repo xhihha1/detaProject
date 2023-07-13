@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>File Manager</title>
+  <link rel="stylesheet" type="text/css" href="../css/fileMng.css">
+</head>
+
+<body>
+  <h1>File Manager</h1>
+  <div class="flexdiv">
+    <div class="flexdivRight"></div>
+    <div class="flexdivLeft">
+      <ul id="filesList">
+        <li class="fileLi">
+          <span>ABC</span>
+          <div>
+            <button type="button" class="fileShow" data-key="">👁</button>
+            <button type="button" class="fileDelt" data-key="">✘</button>
+          </div>
+        </li>
+      </ul>
+      <div>
+        <form id="message-form" enctype="multipart/form-data">
+          <input type="file" id="image-input" name="media">
+          <button type="submit" id="send-button">GO</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/AlertMessages.js"></script>
+  <script src="../js/fileMng.js"></script>
+  <script>
+    fileMng.getFiles()
+
+    const messageForm = document.getElementById('message-form');
+    messageForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(messageForm);
+      fetch('/file/media', {
+            method: 'POST',
+            headers: {
+            },
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            fileMng.callMessages('Success', 'success')
+          })
+          .catch(error => {
+            console.error('Error posting message:', error);
+          });
+    })
+  </script>
+</body>
+
+</html>

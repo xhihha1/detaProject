@@ -46,7 +46,10 @@ router.post('/messages', cpUpload, async (req, res) => {
       name,
       message
     };
-    const image = req.files || req.files['photos'] || req.files['photos'][0];
+    let image = '';
+    if (req.files && req.files['photos'] && req.files['photos'][0]) {
+      image = req.files['photos'][0]
+    }
     const deta = Deta(process.env.DETA_DATA_KEY);
     const db = deta.Base("forum_db");
 
