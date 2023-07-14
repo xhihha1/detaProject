@@ -90,7 +90,7 @@ router.delete('/media/:file_name', async (req, res) => {
   })
 })
 
-const savePhoto = async (photo) => {
+const savePhoto = async (photo, duration) => {
   const deta = Deta(process.env.DETA_DATA_KEY);
   const drive = deta.Drive("simple_drive");
   const db = deta.Base("simple_db");
@@ -100,7 +100,8 @@ const savePhoto = async (photo) => {
     const extension = photo.originalname.match(/\.([^.]*)$/)[1].toLowerCase();
     const removedExtension = photo.originalname.replace(/\.[^.]*$/, "");
     const baseItem = await db.put({
-      ext: extension
+      ext: extension,
+      duration: duration
     });
     key = baseItem.key;
     // const drive_name = `${baseItem.key}${extension}`;
@@ -156,7 +157,7 @@ router.post("/media", cpUpload, async (req, res) => {
     image = req.files['media'][0]
   }
   if (image && image.buffer) {
-    status = await savePhoto(image)
+    status = await savePhoto(image, req.body.duration)
   }
   res.json({
     status

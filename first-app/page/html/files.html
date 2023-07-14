@@ -22,7 +22,7 @@
       </ul>
       <div>
         <form id="message-form" enctype="multipart/form-data">
-          <input type="file" id="image-input" name="media">
+          <input type="file" id="media-input" name="media">
           <button type="submit" id="send-button">GO</button>
         </form>
       </div>
@@ -34,24 +34,7 @@
   <script>
     fileMng.getFiles()
 
-    const messageForm = document.getElementById('message-form');
-    messageForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const formData = new FormData(messageForm);
-      fetch('/file/media', {
-            method: 'POST',
-            headers: {
-            },
-            body: formData
-          })
-          .then(response => response.json())
-          .then(data => {
-            fileMng.callMessages('Success', 'success')
-          })
-          .catch(error => {
-            console.error('Error posting message:', error);
-          });
-    })
+    fileMng.init()
   </script>
 </body>
 

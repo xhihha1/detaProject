@@ -11,12 +11,12 @@ const videoExtensionsRegex = /\.(mp4|mov|avi|mkv|flv|wmv|webm)$/i;
 fileMng.deleteMedia = function (name) {
   flexdivRight.innerHTML = ''
   fetch(`/file/media/${name}`, {
-    method: 'DELETE'
-  })
-  .then(response => response.json())
-  .then(data => {
-    fileMng.callMessages('Success', 'success')
-  })
+      method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+      fileMng.callMessages('Success', 'success')
+    })
 }
 
 fileMng.playShow = function (name) {
@@ -36,8 +36,8 @@ fileMng.playVideo = function (name) {
   flexdivRight.innerHTML = ''
   const audioPlay = document.createElement('video');
   audioPlay.src = name;
-  audioPlay.controls =true;
-  audioPlay.autoplay =true;
+  audioPlay.controls = true;
+  audioPlay.autoplay = true;
   flexdivRight.appendChild(audioPlay);
 }
 
@@ -45,8 +45,8 @@ fileMng.playAudio = function (name) {
   flexdivRight.innerHTML = ''
   const audioPlay = document.createElement('audio');
   audioPlay.src = name;
-  audioPlay.controls =true;
-  audioPlay.autoplay =true;
+  audioPlay.controls = true;
+  audioPlay.autoplay = true;
   flexdivRight.appendChild(audioPlay);
 }
 
@@ -115,7 +115,7 @@ fileMng.getFiles = function (last, size) {
 fileMng.callMessages = function (msg, type = '') {
   let msgAreaDiv = document.getElementById('msgArea');
   if (!msgAreaDiv) {
-    msgAreaDiv = document.createElement('div');  
+    msgAreaDiv = document.createElement('div');
     msgAreaDiv.setAttribute('id', 'msgArea');
     document.body.appendChild(msgAreaDiv);
   }
@@ -129,4 +129,60 @@ fileMng.callMessages = function (msg, type = '') {
   const z = document.createTextNode(msg);
   newBtn.appendChild(z)
   msgAreaDiv.appendChild(newBtn)
+}
+
+fileMng.init = function () {
+  const messageForm = document.getElementById('message-form');
+  messageForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    // const formData = new FormData(messageForm);
+    // fetch('/file/media', {
+    //       method: 'POST',
+    //       headers: {
+    //       },
+    //       body: formData
+    //     })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //       fileMng.callMessages('Success', 'success')
+    //     })
+    //     .catch(error => {
+    //       console.error('Error posting message:', error);
+    //     });
+
+    // -------
+    const fileInput = document.getElementById('media-input');
+    console.log('fileInput', fileInput)
+    const file = fileInput.files[0];
+    if (!file) {
+      console.log('請選擇一個檔案');
+      return;
+    }
+    const isAudioFile = file.type.startsWith('audio/');
+    const formData = new FormData(messageForm);
+    if (isAudioFile) {
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(file);
+
+      await new Promise(resolve => {
+        audio.addEventListener('loadedmetadata', function () {
+          const duration = audio.duration;
+          formData.append('duration', duration * 1000);
+          resolve();
+        });
+      });
+    }
+    try {
+      const response = await fetch('/file/media', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      console.log('伺服器回應：', data);
+    } catch (error) {
+      console.error('錯誤：', error);
+    }
+    // -------
+  })
 }
