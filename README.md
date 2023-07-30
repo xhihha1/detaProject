@@ -29,3 +29,8 @@ https://github.com/line/line-bot-sdk-nodejs/blob/next/examples/kitchensink/index
 https://github.com/mikhailsdv/deta-black-hole/blob/main/backend/src/index.js#L61
 
 https://github.com/mikhailsdv/deta-black-hole/blob/main/backend/src/db.js#L115
+
+
+# PDF 
+
+https://pdfkit.org/docs/paper_sizes.html

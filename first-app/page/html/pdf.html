@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>PDF轉換程式</title>
+  <link rel="stylesheet" type="text/css" href="../css/pdf.css">
+  <style>
+    
+  </style>
+</head>
+
+<body>
+    <h1>多張圖片轉 PDF</h1>
+  <form action="/pdf/convert" method="post" enctype="multipart/form-data">
+    <input type="file" name="images" multiple />
+    <button type="submit">轉換成 PDF</button>
+  </form>
+
+    <script src="../js/pdf.js"></script>
+</body>
+</html>
