@@ -15,6 +15,11 @@
     <input type="file" name="images" multiple />
     <button type="submit">轉換成 PDF</button>
   </form>
+  <h1>上傳多份 PDF 來合併</h1>
+  <form action="/pdf/merge" method="post" enctype="multipart/form-data">
+    <input type="file" name="pdfs" multiple />
+    <button type="submit">合併 PDF</button>
+  </form>
 
     <script src="../js/pdf.js"></script>
 </body>
