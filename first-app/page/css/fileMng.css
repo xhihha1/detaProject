@@ -48,6 +48,12 @@ body {
   border-style: dotted;
   border-color: #A2A2A2;
 }
+.flexdivRight img {
+  max-width: 100%;
+}
+.flexdivRight video {
+  max-width: 100%;
+}
 
 ul {
   list-style: none;

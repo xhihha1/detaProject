@@ -76,8 +76,8 @@ fileMng.getFilelist = function (item) {
   // buttonDel.appendChild(txt);
   li.appendChild(span);
   li.appendChild(div);
-  li.appendChild(buttonShow);
-  li.appendChild(buttonDel);
+  div.appendChild(buttonShow);
+  div.appendChild(buttonDel);
   filesListUI.appendChild(li);
   buttonShow.addEventListener('click', () => {
     fileMng.playShow(item);
@@ -101,8 +101,9 @@ fileMng.getFiles = function (last, size) {
       filesListUI.innerHTML = '';
       // 显示每个留言
       if (data.files) {
-        fileMng.files.concat(data.files);
-        data.files.forEach(item => {
+        fileMng.files = fileMng.files.concat(data.files);
+        fileMng.files = fileMng.files.filter((value, index, array) => array.indexOf(value) === index);
+        fileMng.files.forEach(item => {
           fileMng.getFilelist(item)
         });
       }
@@ -168,6 +169,7 @@ fileMng.init = function () {
       await new Promise(resolve => {
         audio.addEventListener('loadedmetadata', function () {
           const duration = audio.duration;
+          console.log('-- audio --', audio)
           formData.append('duration', duration * 1000);
           resolve();
         });

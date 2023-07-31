@@ -11,6 +11,12 @@
   <div class="flexdiv">
     <div class="flexdivRight"></div>
     <div class="flexdivLeft">
+      <div>
+        <form id="message-form" enctype="multipart/form-data">
+          <input type="file" id="media-input" name="media">
+          <button type="submit" id="send-button">GO</button>
+        </form>
+      </div>
       <ul id="filesList">
         <li class="fileLi">
           <span>ABC</span>
@@ -20,12 +26,6 @@
           </div>
         </li>
       </ul>
-      <div>
-        <form id="message-form" enctype="multipart/form-data">
-          <input type="file" id="media-input" name="media">
-          <button type="submit" id="send-button">GO</button>
-        </form>
-      </div>
     </div>
   </div>
 
@@ -33,7 +33,6 @@
   <script src="../js/fileMng.js"></script>
   <script>
     fileMng.getFiles()
-
     fileMng.init()
   </script>
 </body>
